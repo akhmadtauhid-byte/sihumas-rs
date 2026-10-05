@@ -186,7 +186,7 @@ const ICON = {
 const ic = n => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n] || ''}</svg>`;
 
 /* ---------- chip / tone ---------- */
-const TONE = { 'Aktif': 'ok', 'Disetujui': 'ok', 'Sesuai': 'ok', 'MOU Aktif': 'ok', 'Diproses': 'info', 'Dikunjungi': 'info', 'Proses MOU': 'warn', 'Perlu Perhatian': 'warn', 'Revisi': 'warn', 'Belum Mulai': 'info', 'Ditolak': 'bad', 'Kadaluarsa': 'bad', 'Tidak Sesuai': 'bad', 'MOU Berakhir': 'bad', 'Draft': 'mute', 'Prospek': 'mute', 'Tidak Lanjut': 'mute', 'Belum Dinilai': 'mute' };
+const TONE = { 'Aktif': 'ok', 'Disetujui': 'ok', 'Sesuai': 'ok', 'MOU Aktif': 'ok', 'Diproses': 'info', 'Dikunjungi': 'info', 'Proses MOU': 'warn', 'Perlu Perhatian': 'warn', 'Revisi': 'warn', 'Belum Mulai': 'info', 'Ditolak': 'bad', 'Kadaluarsa': 'bad', 'Tidak Sesuai': 'bad', 'MOU Berakhir': 'bad', 'Draft': 'mute', 'Prospek': 'mute', 'Tidak Lanjut': 'mute', 'Belum Dinilai': 'mute', 'Sesuai dengan Catatan': 'warn', 'Perlu Addendum': 'warn', 'Belum Dikaji': 'warn' };
 const chip = (t, tone) => `<span class="chip t-${tone || TONE[t] || 'mute'}">${esc(t)}</span>`;
 const sisaChip = d => d === null || d === undefined ? '–' : d < 0 ? chip('Lewat ' + Math.abs(d) + ' hr', 'bad') : d <= 30 ? chip(d + ' hari', 'bad') : d <= 90 ? chip(d + ' hari', 'warn') : `<span class="sm">${fmtNum(d)} hari</span>`;
 
@@ -364,7 +364,12 @@ document.addEventListener('click', e => {
   const t = e.target.closest('[data-act]'); if (!t) return;
   const f = ACT[t.dataset.act]; if (f) { e.preventDefault(); safe(f)(t, e); }
 });
-ACT.go = t => { if (t.dataset.flt) { const [k, o] = JSON.parse(t.dataset.flt); Object.assign(S.f[k], o); } go(t.dataset.v, t.dataset.arg); };
+const FDEF = { mou: { q: '', st: 'Semua' }, prs: { q: '', st: '' }, kj: { q: '', pid: '', dari: '', sampai: '' } };
+ACT.go = t => {
+  if (t.dataset.flt) { const [k, o] = JSON.parse(t.dataset.flt); Object.assign(S.f[k], o); }
+  else if (t.classList.contains('nv')) { const k = { mou: 'mou', perusahaan: 'prs', kunjungan: 'kj' }[t.dataset.v]; if (k) S.f[k] = Object.assign({}, FDEF[k]); } // menu = daftar penuh tanpa filter lama
+  go(t.dataset.v, t.dataset.arg);
+};
 ACT.menu = () => {
   const m = modal('Akun', `<p><b>${esc(S.user.nama)}</b><br><span class="mute">${esc(S.user.role_nama)} · @${esc(S.user.username)}</span></p>
     <div class="actions" style="flex-direction:column;align-items:stretch">${S.user.is_admin ? `<button class="btn" data-act="go-set">${ic('gear')} Pengaturan sistem</button>` : ''}<button class="btn" data-act="pin">${ic('key')} Ganti PIN</button><button class="btn bad" data-act="logout">${ic('out')} Keluar</button></div>`);
@@ -399,6 +404,7 @@ VIEWS.dashboard = async function () {
     ${k('MOU dalam proses', fmtNum(d.mou_proses), d.mou_draft + ' draft/revisi', '', 'mou', ['mou', { st: 'Diproses', q: '' }])}
     ${k('Menunggu saya', fmtNum(d.menunggu_saya), 'persetujuan', d.menunggu_saya ? 'bad' : '', 'persetujuan')}
   </div>
+  ${d.mou_lama_belum_dikaji ? `<div class="warnbox"><b>${d.mou_lama_belum_dikaji} MOU lama belum dikaji kesesuaiannya.</b> <button class="btn sm warn" data-act="go" data-v="mou" data-flt='${esc(JSON.stringify(['mou', { st: 'Belum Dikaji', q: '' }]))}'>Lihat daftar</button></div>` : ''}
   <div class="grid g2">
     <div class="card"><div class="ch"><h3>MOU segera berakhir</h3></div>
       ${d.segera_berakhir.length ? d.segera_berakhir.map(m => `<div class="li" data-act="go" data-v="mou" data-arg="${esc(m.id)}"><div><b>${esc(m.judul)}</b><div class="sm mute">${esc(m.perusahaan_nama)} · berakhir ${fmtDate(m.tgl_berakhir)}${m.auto_perpanjang ? ' · perpanjangan otomatis' : ''}</div></div>${sisaChip(m.sisa_hari)}</div>`).join('') : '<div class="empty">Tidak ada MOU yang berakhir dalam 180 hari.</div>'}
@@ -515,7 +521,7 @@ function kunjunganForm(k, after) {
 /* ====================================================================
    VIEW: DAFTAR MOU
    ==================================================================== */
-const MOU_FILTERS = ['Semua', 'Draft', 'Diproses', 'Revisi', 'Aktif', 'Akan Berakhir', 'Kadaluarsa', 'Ditolak'];
+const MOU_FILTERS = ['Semua', 'Draft', 'Diproses', 'Revisi', 'Aktif', 'Akan Berakhir', 'Belum Dikaji', 'Kadaluarsa', 'Ditolak'];
 VIEWS.mou = async function () {
   const rows = await api('mou_list'); S.cache.mou = rows; const f = S.f.mou;
   $('#content').innerHTML = `<div class="bar-tools"><div class="grow"><input type="text" id="q" placeholder="Cari judul, nomor, perusahaan…" value="${esc(f.q)}"></div>
@@ -523,7 +529,7 @@ VIEWS.mou = async function () {
     <div class="chips" id="chs" style="margin-bottom:12px"></div><div id="lst"></div>`;
   const draw = () => {
     f.q = $('#q').value; const q = f.q.toLowerCase();
-    const match = m => f.st === 'Semua' || (f.st === 'Akan Berakhir' ? (m.status_efektif === 'Aktif' && m.sisa_hari !== null && m.sisa_hari <= 90) : m.status_efektif === f.st);
+    const match = m => f.st === 'Semua' || (f.st === 'Akan Berakhir' ? (m.status_efektif === 'Aktif' && m.sisa_hari !== null && m.sisa_hari <= 90) : f.st === 'Belum Dikaji' ? (m.sumber === 'lama' && !m.jumlah_kajian) : m.status_efektif === f.st);
     $('#chs').innerHTML = MOU_FILTERS.map(s => `<button class="pill ${f.st === s ? 'on' : ''}" data-s="${s}">${s}</button>`).join('');
     S.cache.mouView = rows.filter(m => match(m) && (!q || [m.judul, m.nomor, m.perusahaan_nama].join(' ').toLowerCase().includes(q))).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
     $('#lst').innerHTML = tableHtml(mouCols, S.cache.mouView, r => `data-act="mou-open" data-id="${esc(r.id)}"`);
@@ -531,28 +537,69 @@ VIEWS.mou = async function () {
   $('#q').oninput = draw; $('#chs').onclick = e => { const s = e.target.closest('[data-s]')?.dataset.s; if (s) { f.st = s; draw(); } }; draw();
 };
 const mouCols = [
-  { h: 'Kerja sama', v: r => r.judul, html: r => `<b>${esc(r.judul)}</b><small>${esc(r.nomor || 'belum bernomor')}</small>` },
+  { h: 'Kerja sama', v: r => r.judul, html: r => `<b>${esc(r.judul)}</b>${r.sumber === 'lama' ? ' ' + chip('MOU lama', 'info') : ''}<small>${esc(r.nomor || 'belum bernomor')}${r.jumlah_dokumen ? ' · ' + r.jumlah_dokumen + ' file' : ''}</small>` },
   { h: 'Mitra', v: r => r.perusahaan_nama },
   { h: 'Periode', v: r => r.tgl_mulai + ' s/d ' + r.tgl_berakhir, html: r => `${fmtDate(r.tgl_mulai)}<small>s/d ${fmtDate(r.tgl_berakhir)}</small>` },
   { h: 'Sisa', v: r => r.status_efektif === 'Aktif' ? r.sisa_hari : '', html: r => r.status_efektif === 'Aktif' || r.status_efektif === 'Kadaluarsa' ? sisaChip(r.sisa_hari) : '–' },
   { h: 'Status', v: r => r.status_efektif + (r.step_sekarang ? ' (' + r.step_sekarang + ')' : ''), html: r => chip(r.status_efektif) + (r.step_sekarang ? `<small>Menunggu: ${esc(r.step_sekarang)}</small>` : '') },
-  { h: 'Kesesuaian', v: r => r.kesesuaian, html: r => chip(r.kesesuaian) }
+  { h: 'Kesesuaian', v: r => r.kesesuaian, html: r => chip(r.kesesuaian) },
+  { h: 'Kajian', v: r => r.kajian_hasil || (r.sumber === 'lama' ? 'Belum dikaji' : ''), html: r => r.jumlah_kajian ? chip(r.kajian_hasil) + `<small>${fmtDate(r.kajian_tanggal)}</small>` : (r.sumber === 'lama' ? chip('Belum Dikaji') : '–') }
 ];
 ACT['mou-csv'] = () => exportCsv('mou.csv', mouCols, S.cache.mouView || []);
 ACT['mou-open'] = t => go('mou', t.dataset.id);
 ACT['mou-new'] = () => mouForm({});
+/* ---------- file: baca, validasi, unggah ---------- */
+const fmtSize = n => n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
+function fileToB64(f) {
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1] || ''); r.onerror = () => rej(new Error('Gagal membaca file ' + f.name)); r.readAsDataURL(f); });
+}
+function checkFile(f) {
+  const ext = (f.name.indexOf('.') >= 0 ? f.name.split('.').pop() : '').toLowerCase();
+  if (['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'].indexOf(ext) < 0) throw new Error(`"${f.name}": format tidak didukung (gunakan PDF, DOC, DOCX, JPG, atau PNG).`);
+  if (f.size > S.meta.doc_max_mb * 1048576) throw new Error(`"${f.name}" berukuran ${fmtSize(f.size)}, melebihi batas ${S.meta.doc_max_mb} MB. Simpan di Drive lalu tempel linknya pada kolom Link Dokumen.`);
+}
+async function uploadFiles(mouId, files, jenis, catatan) {
+  files.forEach(checkFile); let last;
+  for (let i = 0; i < files.length; i++) {
+    toast(`Mengunggah ${i + 1}/${files.length}: ${files[i].name}…`);
+    last = await api('dokumen_upload', { mou_id: mouId, nama_file: files[i].name, data_b64: await fileToB64(files[i]), jenis, catatan: catatan || '' });
+  }
+  return last;
+}
+const FILE_ACCEPT = '.pdf,.doc,.docx,.jpg,.jpeg,.png';
+
 function mouForm(m0) {
   const isNew = !m0.id; const eff = m0.status;
-  const limited = !isNew && eff === 'Disetujui';
+  const lamaMou = !isNew && m0.sumber === 'lama';
+  const limited = !isNew && eff === 'Disetujui' && !lamaMou;
   const LIM = ['nomor', 'link_dokumen', 'catatan', 'auto_perpanjang'];
   const defs = S.meta.defs.mou;
   const lock = limited ? defs.map(f => f.key).filter(k => LIM.indexOf(k) < 0) : (m0.perusahaan_id && isNew ? ['perusahaan_id'] : []);
   const vals = isNew ? Object.assign({ auto_perpanjang: false }, m0) : m0;
-  formModal({
-    title: isNew ? 'Buat MOU / Kerja Sama' : (limited ? 'Ubah Data Administratif MOU' : 'Ubah MOU'), defs, values: vals, lock, wide: true,
-    pre: limited ? '<div class="warnbox">MOU sudah disetujui — hanya nomor, link dokumen, catatan, dan perpanjangan otomatis yang dapat diubah. Untuk mengubah isi, gunakan "Salin sebagai Draft".</div>' : (isNew ? '<div class="warnbox" style="background:var(--info-l);border-color:#bcd0ff;color:#1e3a8a">Isi seperlunya sebagai Draft dulu. Kelengkapan wajib diperiksa saat MOU diajukan untuk persetujuan.</div>' : ''),
-    onSave: async (v, m) => { if (!isNew) v.id = m0.id; const r = await api('mou_save', v); m.close(); toast('MOU disimpan.', 'ok'); if (isNew) go('mou', r.mou.id); else { S.cache.detail = r; route(); } }
+  const canLama = isNew && (S.meta.settings.mou_lama_admin_only !== 'Y' || S.user.is_admin);
+  const lamaBox = canLama ? `<div class="card" style="padding:12px;background:var(--gray-l);box-shadow:none"><label class="chk" for="lama"><input type="checkbox" id="lama"> <span><b>MOU ini sudah berjalan / sudah ditandatangani</b> — input tanpa alur persetujuan</span></label>
+    <div id="lamaBox" hidden><p class="sm mute" style="margin:6px 0 10px">Semua kolom wajib dan <b>Nomor MOU</b> harus terisi. MOU langsung berstatus aktif, lalu pegawai mengkaji kesesuaiannya pada halaman MOU (bagian Kajian).</p>
+    <div class="fld"><label for="lamaFiles">Lampirkan file MOU (PDF / Word / foto, maks ${S.meta.doc_max_mb} MB per file)</label><input type="file" id="lamaFiles" multiple accept="${FILE_ACCEPT}"><small>Wajib melampirkan minimal satu file, atau mengisi Link Dokumen di bawah.</small></div></div></div>` : '';
+  const m = formModal({
+    title: isNew ? 'Buat MOU / Kerja Sama' : (limited ? 'Ubah Data Administratif MOU' : (lamaMou ? 'Ubah Data MOU Lama' : 'Ubah MOU')), defs, values: vals, lock, wide: true,
+    pre: lamaBox + (limited ? '<div class="warnbox">MOU sudah disetujui — hanya nomor, link dokumen, catatan, dan perpanjangan otomatis yang dapat diubah. Untuk mengubah isi, gunakan "Salin sebagai Draft".</div>'
+      : (isNew ? '<div class="warnbox" id="baruNote" style="background:var(--info-l);border-color:#bcd0ff;color:#1e3a8a">Isi seperlunya sebagai Draft dulu. Kelengkapan wajib diperiksa saat MOU diajukan untuk persetujuan.</div>'
+        : (lamaMou ? '<div class="warnbox">MOU lama: seluruh kolom wajib tetap terisi. Perubahan tercatat di riwayat aktivitas.</div>' : ''))),
+    onSave: async (v, mm) => {
+      const lama = !!(isNew && $('#lama', mm.el)?.checked);
+      const files = lama ? Array.from($('#lamaFiles', mm.el).files) : [];
+      if (lama && !files.length && !String(v.link_dokumen || '').trim()) throw new Error('Lampirkan minimal satu file MOU, atau isi Link Dokumen.');
+      files.forEach(checkFile);
+      if (!isNew) v.id = m0.id; if (lama) v.lama = true;
+      const r = await api('mou_save', v);
+      let note = '';
+      if (lama && files.length) { try { await uploadFiles(r.mou.id, files, 'MOU ditandatangani'); } catch (e) { note = ' Namun unggah file gagal: ' + e.message + ' Unggah ulang dari halaman MOU.'; } }
+      mm.close(); toast((lama ? 'MOU lama tersimpan dan aktif.' : 'MOU disimpan.') + note, note ? 'err' : 'ok');
+      if (isNew) go('mou', r.mou.id); else { S.cache.detail = r; route(); }
+    }
   });
+  const cb = $('#lama', m.el);
+  if (cb) cb.onchange = () => { $('#lamaBox', m.el).hidden = !cb.checked; const bn = $('#baruNote', m.el); if (bn) bn.hidden = cb.checked; };
 }
 
 /* ====================================================================
@@ -591,15 +638,15 @@ function renderMouDetail(d) {
   $('#content').innerHTML = `
   <div class="back"><button class="btn ghost sm" data-act="go" data-v="mou">${ic('left')} Daftar MOU</button></div>
   <div class="card head"><div><h2>${esc(m.judul)}</h2><div class="mute">${esc(m.nomor || 'belum bernomor')} · <a href="#/perusahaan" data-act="prs-from" data-id="${esc(m.perusahaan_id)}">${esc(m.perusahaan_nama)}</a></div></div>
-    <div style="text-align:right">${chip(eff)} ${chip(d.analisis.pengajuan.verdict)}${m.step_sekarang ? `<div class="sm mute" style="margin-top:4px">Menunggu: ${esc(m.step_sekarang)}</div>` : ''}${m.ref_mou ? `<div class="sm"><a href="#/mou/${esc(m.ref_mou)}">Perpanjangan dari MOU sebelumnya</a></div>` : ''}</div></div>
+    <div style="text-align:right">${m.sumber === 'lama' ? chip('MOU lama', 'info') + ' ' : ''}${chip(eff)} ${chip(d.analisis.pengajuan.verdict)}${m.step_sekarang ? `<div class="sm mute" style="margin-top:4px">Menunggu: ${esc(m.step_sekarang)}</div>` : ''}${m.ref_mou ? `<div class="sm"><a href="#/mou/${esc(m.ref_mou)}">Perpanjangan dari MOU sebelumnya</a></div>` : ''}</div></div>
   <div class="actions">
     ${hasInput() && (m.status === 'Draft' || m.status === 'Revisi') ? `<button class="btn pri" data-act="d-submit">${ic('check')} ${m.status === 'Revisi' ? 'Ajukan Ulang' : 'Ajukan Persetujuan'}</button>` : ''}
-    ${canEdit ? `<button class="btn" data-act="d-edit">${ic('edit')} ${m.status === 'Disetujui' ? 'Ubah Nomor / Dokumen' : 'Ubah'}</button>` : ''}
+    ${canEdit ? `<button class="btn" data-act="d-edit">${ic('edit')} ${m.sumber === 'lama' ? 'Ubah Data' : (m.status === 'Disetujui' ? 'Ubah Nomor / Dokumen' : 'Ubah')}</button>` : ''}
     ${d.can_act ? `<button class="btn ok" data-act="d-dec" data-k="setuju">Setujui</button><button class="btn warn" data-act="d-dec" data-k="revisi">Minta Revisi</button><button class="btn bad" data-act="d-dec" data-k="tolak">Tolak</button>` : ''}
     ${S.user.is_admin && m.status === 'Diproses' ? `<button class="btn" data-act="d-sisip">${ic('plus')} Sisipkan Tahap</button><button class="btn" data-act="d-lewati">Lewati Tahap</button>` : ''}
     ${hasInput() && ['Aktif', 'Kadaluarsa', 'Belum Mulai'].indexOf(eff) >= 0 ? `<button class="btn" data-act="d-ext">${ic('repeat')} Perpanjang</button>` : ''}
     ${hasInput() ? `<button class="btn" data-act="d-copy">${ic('copy')} Salin sebagai Draft</button>` : ''}
-    ${hasInput() && ['Draft', 'Revisi', 'Ditolak'].indexOf(m.status) >= 0 ? `<button class="btn bad" data-act="d-del">${ic('trash')} Hapus</button>` : ''}
+    ${hasInput() && (['Draft', 'Revisi', 'Ditolak'].indexOf(m.status) >= 0 || (m.sumber === 'lama' && S.user.is_admin)) ? `<button class="btn bad" data-act="d-del">${ic('trash')} Hapus</button>` : ''}
   </div>
   ${m.status === 'Revisi' || m.status === 'Ditolak' ? `<div class="warnbox"><b>${m.status === 'Revisi' ? 'Dikembalikan untuk revisi' : 'Ditolak'}.</b> Lihat catatan pada tahap terakhir di bawah.${m.status === 'Ditolak' ? ' Gunakan "Salin sebagai Draft" untuk mengajukan versi baru.' : ''}</div>` : ''}
   <div class="grid g2">
@@ -610,8 +657,20 @@ function renderMouDetail(d) {
     <div>${analisisCard(d.analisis.pengajuan, 'Kesesuaian isi MOU', 'Dibandingkan dengan kriteria kebijakan (fase pengajuan).')}</div>
   </div>
   <div class="card"><div class="ch"><h3>Alur persetujuan</h3>${curRound ? `<span class="sm mute">Putaran ${curRound}</span>` : ''}</div>
-    ${curRound ? timelineHtml(rounds[curRound], d.current && d.current.id) : '<div class="empty">Belum diajukan. Setelah diajukan, tahap persetujuan akan tampil di sini.</div>'}
+    ${m.sumber === 'lama' ? `<div class="note">MOU lama — diinput sebagai MOU yang sudah berjalan oleh <b>${esc(m.created_by)}</b> pada ${fmtDT(m.created_at)}, tanpa alur persetujuan. Kesesuaiannya dikaji pegawai pada bagian <b>Kajian</b> di bawah.</div>`
+      : (curRound ? timelineHtml(rounds[curRound], d.current && d.current.id) : '<div class="empty">Belum diajukan. Setelah diajukan, tahap persetujuan akan tampil di sini.</div>')}
     ${rk.slice(1).map(r => `<details class="old"><summary>Putaran ${r} (sebelumnya)</summary>${timelineHtml(rounds[r])}</details>`).join('')}</div>
+  <div class="card"><div class="ch"><h3>Dokumen MOU</h3>${hasInput() ? `<button class="btn sm pri" data-act="dok-new">${ic('plus')} Unggah</button>` : ''}</div>
+    ${d.dokumen.length ? d.dokumen.map(x => `<div class="li" style="cursor:default;align-items:center"><div style="flex:1;min-width:0"><b style="word-break:break-all">${esc(x.nama_file)}</b> ${chip(x.jenis, 'info')}<div class="sm mute">${fmtSize(x.ukuran)} · ${esc(x.diunggah_oleh)} · ${fmtDT(x.diunggah_at)}${x.catatan ? ' · ' + esc(x.catatan) : ''}</div></div>
+      <div style="display:flex;gap:4px;flex:none"><button class="btn sm" data-act="dok-open" data-id="${esc(x.id)}">Lihat</button><button class="btn sm" data-act="dok-dl" data-id="${esc(x.id)}" aria-label="Unduh">${ic('download')}</button>${hasInput() && (S.user.is_admin || x.diunggah_oleh === S.user.nama) ? `<button class="btn sm bad" data-act="dok-del" data-id="${esc(x.id)}" aria-label="Hapus">${ic('trash')}</button>` : ''}</div></div>`).join('')
+      : `<div class="empty">Belum ada file yang diunggah.${hasInput() ? ' Gunakan tombol Unggah untuk melampirkan dokumen MOU.' : ''}</div>`}
+    ${m.link_dokumen ? `<div class="sm" style="margin-top:8px">Link eksternal: ${valHtml({ tipe: 'url' }, m.link_dokumen)}</div>` : ''}</div>
+  <div class="card"><div class="ch"><h3>Kajian kesesuaian oleh pegawai</h3><button class="btn sm pri" data-act="kjx-new">${ic('edit')} Catat Kajian</button></div>
+    ${m.sumber === 'lama' && !d.kajian.length ? '<div class="warnbox">MOU lama ini <b>belum dikaji</b>. Baca dokumennya, cocokkan dengan kartu Kesesuaian di atas, lalu catat hasil kajian.</div>' : ''}
+    ${d.kajian.length ? d.kajian.map(k => `<div class="li" style="cursor:default"><div style="flex:1"><div>${chip(k.hasil)} <span class="sm mute">${fmtDate(k.tanggal)} · ${esc(k.pengkaji)}</span></div>
+      <div class="sm" style="margin-top:4px;white-space:pre-wrap">${esc(k.catatan)}</div>${k.rekomendasi ? `<div class="sm" style="white-space:pre-wrap"><b>Rekomendasi:</b> ${esc(k.rekomendasi)}</div>` : ''}
+      <div class="sm mute">Penilaian sistem saat itu: ${chip(k.verdict_sistem)} skor ${k.skor_sistem === '' ? '–' : esc(k.skor_sistem) + '%'}</div></div>
+      ${(S.user.is_admin || k.pengkaji_id === S.user.id) ? `<button class="btn sm ghost" data-act="kjx-del" data-id="${esc(k.id)}" aria-label="Hapus kajian">${ic('trash')}</button>` : ''}</div>`).join('') : (m.sumber === 'lama' ? '' : '<div class="empty">Belum ada kajian.</div>')}</div>
   ${ev ? analisisCard(ev, 'Evaluasi kinerja kerja sama', 'Capaian realisasi dibanding target, dihitung prorata sejak tanggal mulai.') : ''}
   ${m.status === 'Disetujui' ? `<div class="card"><div class="ch"><h3>Realisasi bulanan</h3>${hasInput() ? `<button class="btn sm pri" data-act="r-new">${ic('plus')} Catat Realisasi</button>` : ''}</div>
     ${d.realisasi.length ? tableHtml([{ h: 'Periode', v: r => r.periode }, { h: 'Peserta', v: r => fmtNum(r.jumlah_peserta) }, { h: 'Pendapatan', v: r => fmtRp(r.pendapatan) }, { h: 'Catatan', v: r => r.catatan }], d.realisasi, hasInput() ? (r => `data-act="r-edit" data-id="${esc(r.id)}"`) : null) : '<div class="empty">Belum ada realisasi tercatat.</div>'}
@@ -663,6 +722,65 @@ function realisasiForm(r) {
 }
 ACT['r-new'] = () => realisasiForm(null);
 ACT['r-edit'] = t => realisasiForm(curDetail().realisasi.find(x => x.id === t.dataset.id));
+
+/* ---------- dokumen ---------- */
+ACT['dok-new'] = () => {
+  const d = curDetail(); const first = !d.dokumen.length;
+  const m = modal('Unggah Dokumen MOU', `<div id="er"></div><div class="form">
+    <div class="fld full"><label for="uf">File (PDF, Word, JPG/PNG — maks ${S.meta.doc_max_mb} MB per file)</label><input type="file" id="uf" multiple accept="${FILE_ACCEPT}"></div>
+    <div class="fld"><label for="uj">Jenis dokumen</label><select id="uj">${S.meta.doc_jenis.map(j => `<option ${j === (first && d.mou.sumber === 'lama' ? 'MOU ditandatangani' : (d.mou.status === 'Draft' || d.mou.status === 'Revisi' ? 'Draf MOU' : 'Lampiran')) ? 'selected' : ''}>${esc(j)}</option>`).join('')}</select></div>
+    <div class="fld"><label for="uc">Catatan (opsional)</label><input type="text" id="uc"></div></div>
+    <p class="sm mute">File disimpan aman di Google Drive RS dan hanya dapat dibuka lewat aplikasi ini oleh pengguna yang sudah login.</p>`,
+    { foot: '<button class="btn" data-n>Batal</button><button class="btn pri" data-y>Unggah</button>' });
+  $('[data-n]', m.el).onclick = m.close;
+  $('[data-y]', m.el).onclick = async () => {
+    const btn = $('[data-y]', m.el); const er = $('#er', m.el); er.innerHTML = '';
+    const files = Array.from($('#uf', m.el).files);
+    if (!files.length) { er.innerHTML = '<div class="errbox">Pilih file terlebih dahulu.</div>'; return; }
+    btn.disabled = true;
+    try { const r = await uploadFiles(d.mou.id, files, $('#uj', m.el).value, $('#uc', m.el).value); m.close(); refreshDetail(r); toast('Dokumen terunggah.', 'ok'); }
+    catch (e) { er.innerHTML = `<div class="errbox">${esc(e.message)}</div>`; if (curDetail()) { api('mou_get', { id: d.mou.id }).then(refreshDetail).catch(() => { }); } }
+    btn.disabled = false;
+  };
+};
+async function dokBlob(id) {
+  const r = await api('dokumen_get', { id });
+  const bin = atob(r.data_b64); const arr = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return { name: r.nama_file, mime: r.mime, blob: new Blob([arr], { type: r.mime }) };
+}
+function saveBlob(f) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(f.blob); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+}
+ACT['dok-dl'] = async t => { saveBlob(await dokBlob(t.dataset.id)); };
+ACT['dok-open'] = async t => {
+  const f = await dokBlob(t.dataset.id); const isImg = /^image\//.test(f.mime), isPdf = f.mime === 'application/pdf';
+  if (!isImg && !isPdf) { saveBlob(f); toast('File Word diunduh — buka dengan aplikasi Word.', 'ok'); return; }
+  const url = URL.createObjectURL(f.blob);
+  modal(f.name, isImg ? `<img src="${url}" alt="${esc(f.name)}" style="max-width:100%;display:block;margin:auto">` : `<iframe src="${url}" title="${esc(f.name)}" style="width:100%;height:68vh;border:0"></iframe>`,
+    { wide: true, foot: `<a class="btn" href="${url}" target="_blank" rel="noopener">Buka di tab baru</a><a class="btn pri" href="${url}" download="${esc(f.name)}">${ic('download')} Unduh</a>` });
+};
+ACT['dok-del'] = async t => {
+  const d = curDetail(); const x = d.dokumen.find(q => q.id === t.dataset.id);
+  if (!await confirmBox('Hapus file "' + x.nama_file + '"? File akan dipindahkan ke tempat sampah Drive.', 'Hapus', true)) return;
+  refreshDetail(await api('dokumen_delete', { id: x.id })); toast('Dokumen dihapus.', 'ok');
+};
+
+/* ---------- kajian ---------- */
+ACT['kjx-new'] = () => {
+  const d = curDetail(); const a = d.analisis.pengajuan;
+  formModal({
+    title: 'Catat Kajian Kesesuaian', saveLabel: 'Simpan Kajian', values: { tanggal: today() },
+    pre: `<div class="warnbox" style="background:var(--info-l);border-color:#bcd0ff;color:#1e3a8a">Penilaian sistem saat ini: ${chip(a.verdict)} (skor ${a.skor ?? '–'}%, ${a.wajib_gagal} kriteria wajib gagal). Kajian Anda dicatat berdampingan dengan penilaian ini.</div>`,
+    defs: [{ key: 'tanggal', label: 'Tanggal kajian', tipe: 'date', wajib: true }, { key: 'hasil', label: 'Hasil kajian', tipe: 'select', opsi: S.meta.kajian_hasil, wajib: true },
+    { key: 'catatan', label: 'Temuan / catatan kajian', tipe: 'textarea', wajib: true, bantuan: 'Mis. pasal yang tidak sesuai kebijakan tarif, klausul yang belum ada.' },
+    { key: 'rekomendasi', label: 'Rekomendasi tindak lanjut', tipe: 'textarea', bantuan: 'Mis. addendum, negosiasi ulang saat perpanjangan.' }],
+    onSave: async (v, m) => { const r = await api('kajian_save', Object.assign({ mou_id: d.mou.id }, v)); m.close(); refreshDetail(r); toast('Kajian tersimpan.', 'ok'); }
+  });
+};
+ACT['kjx-del'] = async t => {
+  if (!await confirmBox('Hapus catatan kajian ini?', 'Hapus', true)) return;
+  refreshDetail(await api('kajian_delete', { id: t.dataset.id })); toast('Kajian dihapus.', 'ok');
+};
 
 /* ====================================================================
    VIEW: PERSETUJUAN
@@ -827,13 +945,15 @@ TABS.umum = async function () {
     ${fieldHtml({ key: 'reminder_role', label: 'Peran penerima pengingat', tipe: 'select', opsi: S.meta.roles.map(r => ({ v: r.id, l: r.nama })) }, s.reminder_role)}
     ${fieldHtml({ key: 'wa_aktif', label: 'Aktifkan notifikasi WhatsApp (Fonnte)', tipe: 'checkbox' }, s.wa_aktif === 'Y')}
     ${fieldHtml({ key: 'fonnte_token', label: 'Token Fonnte', tipe: 'text', bantuan: 'Tersimpan di server; hanya 4 karakter terakhir ditampilkan.' }, s.fonnte_token)}
-    ${fieldHtml({ key: 'app_url', label: 'URL aplikasi (disisipkan di pesan WA)', tipe: 'url' }, s.app_url)}</div>
+    ${fieldHtml({ key: 'app_url', label: 'URL aplikasi (disisipkan di pesan WA)', tipe: 'url' }, s.app_url)}
+    ${fieldHtml({ key: 'mou_lama_admin_only', label: 'Batasi input "MOU sudah berjalan" hanya untuk admin', tipe: 'checkbox', bantuan: 'MOU lama langsung aktif tanpa persetujuan; semua input tercatat di log.' }, s.mou_lama_admin_only === 'Y')}
+    ${fieldHtml({ key: 'drive_folder_id', label: 'ID folder Google Drive untuk dokumen MOU', tipe: 'text', bantuan: 'Dibuat otomatis saat setup(). Ubah hanya bila ingin memakai folder lain (akun pemilik skrip harus punya akses).' }, s.drive_folder_id)}</div>
     <div class="actions" style="margin-top:14px"><button class="btn pri" data-act="set-save">Simpan</button><button class="btn" data-act="set-test">Uji pengingat sekarang</button></div>
     <p class="sm mute">Pengingat harian berjalan otomatis setelah fungsi <code>setupTrigger()</code> dijalankan sekali di editor Apps Script. "Uji pengingat" memeriksa MOU yang tepat jatuh pada hari-hari di atas dan mengirim WA bila notifikasi aktif.</p></div>`;
 };
-const SET_DEFS = [{ key: 'nama_rs', tipe: 'text' }, { key: 'ambang_kesesuaian', tipe: 'number' }, { key: 'reminder_hari', tipe: 'text' }, { key: 'reminder_role', tipe: 'select' }, { key: 'wa_aktif', tipe: 'checkbox' }, { key: 'fonnte_token', tipe: 'text' }, { key: 'app_url', tipe: 'url' }];
+const SET_DEFS = [{ key: 'nama_rs', tipe: 'text' }, { key: 'ambang_kesesuaian', tipe: 'number' }, { key: 'reminder_hari', tipe: 'text' }, { key: 'reminder_role', tipe: 'select' }, { key: 'wa_aktif', tipe: 'checkbox' }, { key: 'fonnte_token', tipe: 'text' }, { key: 'app_url', tipe: 'url' }, { key: 'mou_lama_admin_only', tipe: 'checkbox' }, { key: 'drive_folder_id', tipe: 'text' }];
 ACT['set-save'] = async () => {
-  const v = readFields($('#sf'), SET_DEFS); v.wa_aktif = yv(v.wa_aktif);
+  const v = readFields($('#sf'), SET_DEFS); v.wa_aktif = yv(v.wa_aktif); v.mou_lama_admin_only = yv(v.mou_lama_admin_only);
   await api('settings_save', { values: v }); toast('Pengaturan disimpan.', 'ok'); await loadMeta();
 };
 ACT['set-test'] = async () => { const r = await api('reminder_test'); toast(r.length ? r.length + ' MOU memicu pengingat hari ini.' : 'Tidak ada MOU yang jatuh pada hari pengingat hari ini.', 'ok'); };
