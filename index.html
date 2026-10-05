@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<title>SIHUMAS-RS · Humas & Marketing</title>
+<style>
+:root{
+  --bg:#f4f6f7;--card:#fff;--ink:#16232b;--mute:#5d6b74;--line:#dfe5e8;--brand:#0f766e;--brand-d:#0b5a54;--brand-l:#e3f4f2;
+  --ok:#15803d;--ok-l:#e3f6e9;--info:#1d4ed8;--info-l:#e5edff;--warn:#b45309;--warn-l:#fdf0d8;--bad:#b91c1c;--bad-l:#fde8e8;--gray-l:#eceff1;
+  --r:12px;--sh:0 1px 2px rgba(16,35,43,.06),0 2px 8px rgba(16,35,43,.05);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3,h4{margin:0;line-height:1.25}
+.ic{width:18px;height:18px;flex:none;vertical-align:-3px}
+body.loading::before{content:"";position:fixed;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--brand),transparent);background-size:50% 100%;animation:ld 1s linear infinite;z-index:999}
+@keyframes ld{from{background-position:-50% 0}to{background-position:150% 0}}
+
+/* layout */
+.shell{display:flex;min-height:100vh}
+.side{width:236px;background:#0d3b38;color:#d6ece9;padding:18px 12px;position:sticky;top:0;height:100vh;display:none;flex-direction:column;gap:4px}
+.side .brand{padding:6px 10px 16px;border-bottom:1px solid rgba(255,255,255,.12);margin-bottom:10px}
+.side .brand b{display:block;font-size:19px;color:#fff;letter-spacing:.3px}
+.side .brand span{font-size:12px;opacity:.75}
+.nv{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:0;background:none;color:inherit;cursor:pointer;text-align:left;width:100%;position:relative}
+.nv:hover{background:rgba(255,255,255,.08)}
+.nv.on{background:rgba(255,255,255,.16);color:#fff;font-weight:600}
+.badge{background:#ef4444;color:#fff;border-radius:99px;font-size:11px;padding:1px 7px;font-weight:700;margin-left:auto}
+.side .me{margin-top:auto;padding:12px 10px;border-top:1px solid rgba(255,255,255,.12);font-size:13px}
+.side .me small{display:block;opacity:.7}
+.main{flex:1;min-width:0;padding-bottom:84px}
+.top{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.top h1{font-size:18px;flex:1}
+.avatar{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:6px 12px;cursor:pointer;display:flex;gap:8px;align-items:center;font-size:13px}
+#content{padding:16px;max-width:1280px;margin:0 auto}
+.bottom{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;z-index:30;padding-bottom:env(safe-area-inset-bottom)}
+.bottom .nv{flex-direction:column;gap:2px;font-size:11px;color:var(--mute);justify-content:center;align-items:center;border-radius:0;padding:8px 2px;color:var(--mute)}
+.bottom .nv.on{color:var(--brand);background:none}
+.bottom .badge{position:absolute;top:2px;right:calc(50% - 22px);margin:0}
+@media(min-width:900px){.side{display:flex}.bottom{display:none}.main{padding-bottom:24px}#content{padding:24px}}
+
+/* komponen */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:16px;margin-bottom:14px}
+.card>h3,.card .ch h3{font-size:15px;margin-bottom:10px}
+.ch{display:flex;align-items:center;gap:8px;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap}
+.ch h3{margin:0}
+.grid{display:grid;gap:12px}
+.g2{grid-template-columns:1fr}.g3{grid-template-columns:1fr 1fr}
+@media(min-width:900px){.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+@media(min-width:700px){.kpis{grid-template-columns:repeat(3,1fr)}}@media(min-width:1100px){.kpis{grid-template-columns:repeat(6,1fr)}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:2px;box-shadow:var(--sh)}
+.kpi span{font-size:12px;color:var(--mute)}.kpi b{font-size:26px;line-height:1.1}.kpi small{font-size:11px;color:var(--mute);min-height:14px}
+.kpi.warn b{color:var(--warn)}.kpi.bad b{color:var(--bad)}.kpi.ok b{color:var(--ok)}.kpi.info b{color:var(--info)}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 14px;cursor:pointer;min-height:40px;font-weight:500}
+.btn:hover{background:var(--gray-l)}
+.btn.pri{background:var(--brand);border-color:var(--brand);color:#fff}.btn.pri:hover{background:var(--brand-d)}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}.btn.bad{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn.warn{background:var(--warn-l);border-color:#f0d49a;color:var(--warn)}
+.btn.ghost{border-color:transparent;background:none}.btn.sm{min-height:32px;padding:4px 10px;font-size:13px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.bar-tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.bar-tools .grow{flex:1;min-width:160px}
+input[type=text],input[type=number],input[type=date],input[type=month],input[type=url],input[type=password],select,textarea{width:100%;border:1px solid #c9d2d7;border-radius:10px;padding:9px 11px;background:#fff;min-height:40px}
+textarea{resize:vertical}
+input:focus,select:focus,textarea:focus,.btn:focus-visible,.kpi:focus-visible{outline:2px solid var(--brand);outline-offset:1px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.pill{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:5px 12px;cursor:pointer;font-size:13px}
+.pill.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.chip{display:inline-block;border-radius:99px;padding:2px 10px;font-size:12px;font-weight:600;white-space:nowrap}
+.t-ok{background:var(--ok-l);color:var(--ok)}.t-info{background:var(--info-l);color:var(--info)}.t-warn{background:var(--warn-l);color:var(--warn)}.t-bad{background:var(--bad-l);color:var(--bad)}.t-mute{background:var(--gray-l);color:var(--mute)}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--card);box-shadow:var(--sh)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{background:#f0f4f5;text-align:left;font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.4px;padding:9px 12px;white-space:nowrap}
+td{padding:10px 12px;border-top:1px solid var(--line);vertical-align:top}
+tr.row{cursor:pointer}tr.row:hover td{background:#f7fafa}
+td small{display:block;color:var(--mute)}
+.empty{padding:28px;text-align:center;color:var(--mute)}
+.mute{color:var(--mute)}.sm{font-size:13px}
+.bars{display:flex;align-items:flex-end;gap:10px;height:130px;padding-top:8px}
+.bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;position:relative}
+.bar i{width:100%;max-width:44px;background:var(--brand);border-radius:6px 6px 0 0;min-height:2px;display:block}
+.bar em{font-style:normal;font-size:12px;font-weight:700;margin-bottom:2px}.bar span{font-size:11px;color:var(--mute);margin-top:4px}
+.fun{display:grid;grid-template-columns:110px 1fr 34px;gap:8px;align-items:center;font-size:13px;margin:6px 0}
+.fun div{background:var(--gray-l);border-radius:6px;height:14px;overflow:hidden}.fun i{display:block;height:100%;background:var(--brand)}
+.li{display:flex;gap:10px;justify-content:space-between;align-items:flex-start;padding:9px 0;border-top:1px solid var(--line);cursor:pointer}
+.li:first-of-type{border-top:0}.li:hover{background:#f7fafa}
+dl.kv{display:grid;grid-template-columns:1fr;gap:0;margin:0}
+@media(min-width:600px){dl.kv{grid-template-columns:1fr 1fr;column-gap:20px}}
+dl.kv div{padding:7px 0;border-bottom:1px dashed var(--line)}
+dl.kv dt{font-size:12px;color:var(--mute)}dl.kv dd{margin:0;white-space:pre-wrap;word-break:break-word}
+.back{margin-bottom:10px}
+.head{display:flex;gap:12px;justify-content:space-between;flex-wrap:wrap;align-items:flex-start}
+.head h2{font-size:20px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.meter{height:10px;background:var(--gray-l);border-radius:99px;overflow:hidden;position:relative;margin:6px 0 4px}
+.meter i{display:block;height:100%;background:var(--brand)}.meter b{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--ink)}
+.crit{display:flex;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.crit .m{width:22px;height:22px;border-radius:99px;display:grid;place-items:center;font-size:13px;font-weight:800;flex:none;margin-top:1px}
+.m.lulus{background:var(--ok-l);color:var(--ok)}.m.gagal{background:var(--bad-l);color:var(--bad)}.m.na{background:var(--gray-l);color:var(--mute)}
+.tl{list-style:none;margin:0;padding:0}
+.tl li{display:flex;gap:12px;padding-bottom:16px;position:relative}
+.tl li:not(:last-child)::before{content:"";position:absolute;left:12px;top:26px;bottom:0;width:2px;background:var(--line)}
+.dot{width:26px;height:26px;border-radius:99px;display:grid;place-items:center;font-size:12px;font-weight:800;flex:none;border:2px solid var(--line);background:#fff;color:var(--mute)}
+.dot.Disetujui,.dot.Dilewati{background:var(--ok);border-color:var(--ok);color:#fff}
+.dot.Ditolak{background:var(--bad);border-color:var(--bad);color:#fff}.dot.Revisi{background:var(--warn);border-color:var(--warn);color:#fff}
+.dot.now{border-color:var(--info);color:var(--info);box-shadow:0 0 0 4px var(--info-l)}
+.dot.Dibatalkan{background:var(--gray-l)}
+details.old{margin-top:6px}details.old summary{cursor:pointer;color:var(--mute);font-size:13px;padding:4px 0}
+.note{background:var(--gray-l);border-radius:8px;padding:6px 10px;margin-top:4px;font-size:13px;white-space:pre-wrap}
+.warnbox{background:var(--warn-l);border:1px solid #f0d49a;color:#7a3e07;border-radius:10px;padding:10px 12px;font-size:14px;margin-bottom:10px}
+.errbox{background:var(--bad-l);color:var(--bad);border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:14px}
+/* modal */
+.ov{position:fixed;inset:0;background:rgba(10,25,30,.5);z-index:100;display:flex;align-items:flex-end;justify-content:center;padding:0}
+.dlg{background:var(--card);width:100%;max-height:94vh;border-radius:16px 16px 0 0;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.3);max-width:620px}
+.dlg.wide{max-width:900px}
+@media(min-width:700px){.ov{align-items:center;padding:20px}.dlg{border-radius:16px}}
+.dh{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line)}
+.dh h3{font-size:17px}.x{border:0;background:none;font-size:26px;line-height:1;cursor:pointer;color:var(--mute);padding:0 6px}
+.db{padding:16px;overflow:auto;flex:1}.df{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.form{display:grid;gap:12px;grid-template-columns:1fr}
+@media(min-width:600px){.form{grid-template-columns:1fr 1fr}.fld.full{grid-column:1/-1}}
+.fld label{display:block;font-size:13px;font-weight:600;margin-bottom:4px}.fld small{color:var(--mute);font-size:12px;display:block;margin-top:3px}
+.req{color:var(--bad)}.chk{display:flex!important;align-items:center;gap:8px;font-weight:500!important;min-height:40px}.chk input{width:20px;height:20px}
+.tabs{display:flex;gap:4px;overflow-x:auto;margin-bottom:14px;border-bottom:1px solid var(--line)}
+.tab{border:0;background:none;padding:10px 14px;cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;color:var(--mute);font-weight:600}
+.tab.on{color:var(--brand);border-color:var(--brand)}
+#toasts{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;width:min(92vw,440px)}
+.toast{background:#16232b;color:#fff;border-radius:10px;padding:10px 14px;box-shadow:0 6px 20px rgba(0,0,0,.25);font-size:14px}.toast.err{background:var(--bad)}.toast.ok{background:var(--ok)}
+/* login */
+.login{min-height:100vh;display:grid;place-items:center;padding:16px;background:linear-gradient(160deg,#0d3b38,#0f766e)}
+.login .box{background:#fff;border-radius:18px;padding:26px;width:100%;max-width:380px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.login h1{font-size:24px;color:var(--brand)}.login p{color:var(--mute);margin:4px 0 18px}
+.login .fld{margin-bottom:12px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modals"></div>
+<div id="toasts"></div>
+
+<script>
+/* ====================================================================
+   SIHUMAS-RS — Frontend. Ganti API_URL dengan URL Web App Apps Script.
+   INGAT: setiap index.html diganti penuh, API_URL harus diisi ulang.
+   ==================================================================== */
+const API_URL = 'https://script.google.com/macros/s/AKfycbysd0umwtw1Y9XretnQ9gHF5DP7nvUaAaJNUDiytTbfYLv5npuneMGIHD4GLRdkcZx2/exec';
+
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const BLN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+const fmtDate = s => { if (!s) return '–'; const [y, m, d] = String(s).slice(0, 10).split('-'); return `${+d} ${BLN[+m - 1]} ${y}`; };
+const fmtDT = s => s ? fmtDate(s) + ' ' + String(s).slice(11, 16) : '–';
+const fmtNum = n => (n === '' || n == null) ? '–' : new Intl.NumberFormat('id-ID').format(n);
+const fmtRp = n => (n === '' || n == null) ? '–' : 'Rp ' + fmtNum(n);
+const today = () => new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+const COMPUTED_FALLBACK = [];
+
+const S = { token: localStorage.getItem('sihumas_token') || '', user: null, meta: null, view: 'dashboard', arg: null, badge: 0, cache: {}, f: { mou: { q: '', st: 'Semua' }, prs: { q: '', st: '' }, kj: { q: '', pid: '', dari: '', sampai: '' } }, tab: 'alur', fent: 'mou' };
+
+/* ---------- ikon ---------- */
+const ICON = {
+  home: '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+  building: '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/>',
+  pin: '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
+  file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+  check: '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>',
+  plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+  search: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+  edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+  trash: '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m5 0V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2"/>',
+  left: '<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>',
+  up: '<polyline points="18 15 12 9 6 15"/>', down: '<polyline points="6 9 12 15 18 9"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+  out: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
+  key: '<circle cx="8" cy="15" r="4"/><line x1="10.8" y1="12.2" x2="20" y2="3"/><line x1="17" y1="6" x2="20" y2="9"/>',
+  link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+  copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  repeat: '<polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>'
+};
+const ic = n => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n] || ''}</svg>`;
+
+/* ---------- chip / tone ---------- */
+const TONE = { 'Aktif': 'ok', 'Disetujui': 'ok', 'Sesuai': 'ok', 'MOU Aktif': 'ok', 'Diproses': 'info', 'Dikunjungi': 'info', 'Proses MOU': 'warn', 'Perlu Perhatian': 'warn', 'Revisi': 'warn', 'Belum Mulai': 'info', 'Ditolak': 'bad', 'Kadaluarsa': 'bad', 'Tidak Sesuai': 'bad', 'MOU Berakhir': 'bad', 'Draft': 'mute', 'Prospek': 'mute', 'Tidak Lanjut': 'mute', 'Belum Dinilai': 'mute' };
+const chip = (t, tone) => `<span class="chip t-${tone || TONE[t] || 'mute'}">${esc(t)}</span>`;
+const sisaChip = d => d === null || d === undefined ? '–' : d < 0 ? chip('Lewat ' + Math.abs(d) + ' hr', 'bad') : d <= 30 ? chip(d + ' hari', 'bad') : d <= 90 ? chip(d + ' hari', 'warn') : `<span class="sm">${fmtNum(d)} hari</span>`;
+
+/* ---------- API ---------- */
+let pending = 0;
+const busy = d => { pending += d; document.body.classList.toggle('loading', pending > 0); };
+async function api(action, data = {}) {
+  if (API_URL === 'API_URL') throw new Error('API_URL belum diisi pada index.html (lihat PANDUAN.md langkah 6).');
+  busy(1);
+  try {
+    let res;
+    try { res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, token: S.token, data }) }); }
+    catch (e) { throw new Error('Tidak dapat terhubung ke server. Periksa koneksi internet / URL Web App.'); }
+    let j; try { j = await res.json(); } catch (e) { throw new Error('Respons server tidak valid. Pastikan Web App di-deploy dengan akses "Anyone".'); }
+    if (!j.ok) { if (/^AUTH/.test(j.error)) { doLogout(true); } throw new Error(String(j.error).replace(/^AUTH:\s*/, '')); }
+    return j.data;
+  } finally { busy(-1); }
+}
+const safe = fn => async (...a) => { try { await fn(...a); } catch (e) { toast(e.message || String(e), 'err'); } };
+
+/* ---------- UI primitif ---------- */
+function toast(msg, type) {
+  const el = document.createElement('div'); el.className = 'toast ' + (type || ''); el.textContent = msg; $('#toasts').appendChild(el);
+  setTimeout(() => el.remove(), type === 'err' ? 6000 : 3000);
+}
+function modal(title, body, { wide = false, foot = '' } = {}) {
+  const wrap = document.createElement('div'); wrap.className = 'ov';
+  wrap.innerHTML = `<div class="dlg ${wide ? 'wide' : ''}" role="dialog" aria-modal="true"><div class="dh"><h3>${esc(title)}</h3><button class="x" data-close aria-label="Tutup">×</button></div><div class="db">${body}</div>${foot ? `<div class="df">${foot}</div>` : ''}</div>`;
+  $('#modals').appendChild(wrap);
+  const close = () => wrap.remove();
+  $('[data-close]', wrap).onclick = close;
+  return { el: wrap, close, body: $('.db', wrap), foot: $('.df', wrap) };
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { const m = $$('#modals .ov'); if (m.length) m[m.length - 1].remove(); } });
+function confirmBox(msg, okLabel = 'Ya', danger = false) {
+  return new Promise(res => {
+    const m = modal('Konfirmasi', `<p>${esc(msg)}</p>`, { foot: `<button class="btn" data-n>Batal</button><button class="btn ${danger ? 'bad' : 'pri'}" data-y>${esc(okLabel)}</button>` });
+    $('[data-n]', m.el).onclick = () => { m.close(); res(false); }; $('[data-y]', m.el).onclick = () => { m.close(); res(true); };
+    $('[data-close]', m.el).onclick = () => { m.close(); res(false); };
+  });
+}
+function askNote({ title, label, required, okLabel = 'Simpan', cls = 'pri', pre = '' }) {
+  return new Promise(res => {
+    const m = modal(title, `${pre}<div class="fld"><label>${esc(label)}${required ? ' <b class="req">*</b>' : ''}</label><textarea id="nt" rows="4"></textarea></div><div id="er"></div>`, { foot: `<button class="btn" data-n>Batal</button><button class="btn ${cls}" data-y>${esc(okLabel)}</button>` });
+    $('[data-n]', m.el).onclick = () => { m.close(); res(null); };
+    $('[data-close]', m.el).onclick = () => { m.close(); res(null); };
+    $('[data-y]', m.el).onclick = () => { const v = $('#nt', m.el).value.trim(); if (required && !v) { $('#er', m.el).innerHTML = '<div class="errbox">Catatan wajib diisi.</div>'; return; } m.close(); res(v); };
+    setTimeout(() => $('#nt', m.el)?.focus(), 50);
+  });
+}
+
+/* ---------- formulir dinamis ---------- */
+const optPair = o => typeof o === 'string' ? { v: o, l: o } : o;
+function fieldHtml(f, val, o = {}) {
+  const id = 'f_' + f.key; const dis = o.lock && o.lock.indexOf(f.key) >= 0 ? ' disabled' : '';
+  const req = f.wajib ? ' <b class="req">*</b>' : ''; let inp;
+  const v = esc(val ?? '');
+  switch (f.tipe) {
+    case 'textarea': inp = `<textarea id="${id}" rows="3"${dis}>${v}</textarea>`; break;
+    case 'number': inp = `<input id="${id}" type="number" step="any" inputmode="decimal" value="${v}"${dis}>`; break;
+    case 'date': inp = `<input id="${id}" type="date" value="${v}"${dis}>`; break;
+    case 'month': inp = `<input id="${id}" type="month" value="${v}"${dis}>`; break;
+    case 'url': inp = `<input id="${id}" type="url" placeholder="https://" value="${v}"${dis}>`; break;
+    case 'select': inp = `<select id="${id}"${dis}><option value="">— pilih —</option>${(f.opsi || []).map(optPair).map(p => `<option value="${esc(p.v)}"${String(val) === String(p.v) ? ' selected' : ''}>${esc(p.l)}</option>`).join('')}</select>`; break;
+    case 'ref': inp = `<select id="${id}"${dis}><option value="">— pilih perusahaan —</option>${S.meta.perusahaan_basic.map(p => `<option value="${esc(p.id)}"${val === p.id ? ' selected' : ''}>${esc(p.nama)}${p.kota ? ' · ' + esc(p.kota) : ''}</option>`).join('')}</select>`; break;
+    case 'checkbox': return `<div class="fld"><label class="chk" for="${id}"><input id="${id}" type="checkbox"${val ? ' checked' : ''}${dis}> <span>${esc(f.label)}</span></label>${f.bantuan ? `<small>${esc(f.bantuan)}</small>` : ''}</div>`;
+    default: inp = `<input id="${id}" type="text" value="${v}"${dis}>`;
+  }
+  return `<div class="fld ${f.tipe === 'textarea' ? 'full' : ''}"><label for="${id}">${esc(f.label)}${req}</label>${inp}${f.bantuan ? `<small>${esc(f.bantuan)}</small>` : ''}</div>`;
+}
+function readFields(root, defs) {
+  const o = {};
+  defs.forEach(f => { const el = root.querySelector('#f_' + f.key); if (el) o[f.key] = f.tipe === 'checkbox' ? el.checked : el.value; });
+  return o;
+}
+function formModal({ title, defs, values = {}, lock, wide, pre = '', saveLabel = 'Simpan', onSave }) {
+  const m = modal(title, `${pre}<div id="er"></div><div class="form">${defs.map(f => fieldHtml(f, values[f.key], { lock })).join('')}</div>`, { wide, foot: `<button class="btn" data-n>Batal</button><button class="btn pri" data-y>${esc(saveLabel)}</button>` });
+  $('[data-n]', m.el).onclick = m.close;
+  $('[data-y]', m.el).onclick = async () => {
+    const btn = $('[data-y]', m.el); btn.disabled = true; $('#er', m.el).innerHTML = '';
+    try { await onSave(readFields(m.el, defs), m); } catch (e) { $('#er', m.el).innerHTML = `<div class="errbox">${esc(e.message)}</div>`; }
+    btn.disabled = false;
+  };
+  return m;
+}
+
+/* ---------- tabel & ekspor ---------- */
+function tableHtml(cols, rows, rowAttr) {
+  if (!rows.length) return '<div class="empty">Belum ada data.</div>';
+  return `<div class="tw"><table><thead><tr>${cols.map(c => `<th>${esc(c.h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr class="${rowAttr ? 'row' : ''}" ${rowAttr ? rowAttr(r) : ''}>${cols.map(c => `<td>${c.html ? c.html(r) : esc(c.v(r))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
+function exportCsv(name, cols, rows) {
+  const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const txt = '﻿' + [cols.map(c => q(c.h)).join(',')].concat(rows.map(r => cols.map(c => q(c.v(r))).join(','))).join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], { type: 'text/csv;charset=utf-8' })); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+}
+const yn = v => v === true ? 'Ya' : v === false ? 'Tidak' : (v === 'true' ? 'Ya' : v === 'false' ? 'Tidak' : v);
+function valHtml(f, v) {
+  if (f.tipe === 'checkbox') return v ? 'Ya' : 'Tidak';
+  if (v === '' || v == null) return '<span class="mute">–</span>';
+  if (f.tipe === 'date') return fmtDate(v);
+  if (f.tipe === 'month') return esc(v);
+  if (f.tipe === 'number') return f.fmt === 'rp' ? fmtRp(v) : fmtNum(v);
+  if (f.tipe === 'url') return /^https?:\/\//i.test(v) ? `<a href="${esc(v)}" target="_blank" rel="noopener">${ic('link')} Buka dokumen</a>` : esc(v);
+  if (f.tipe === 'ref') return esc((S.meta.perusahaan_basic.find(p => p.id === v) || {}).nama || v);
+  return esc(v);
+}
+const kvHtml = (defs, o, skip = []) => `<dl class="kv">${defs.filter(f => skip.indexOf(f.key) < 0).map(f => `<div><dt>${esc(f.label)}</dt><dd>${valHtml(f, o[f.key])}</dd></div>`).join('')}</dl>`;
+const roleName = k => k === 'admin' ? 'Administrator' : ((S.meta.roles.find(r => r.id === k) || {}).nama || k);
+const mouFields = () => S.meta.defs.mou.map(f => ({ key: f.key, label: f.label, tipe: f.tipe }))
+  .concat(S.meta.computed.map(c => ({ key: c.key, label: c.label + ' (otomatis)', tipe: 'number', computed: true })));
+const fieldLabel = k => (mouFields().find(f => f.key === k) || { label: k }).label;
+
+/* ---------- auth ---------- */
+async function loadMeta() {
+  S.meta = await api('bootstrap'); S.user = S.meta.user;
+}
+function doLogout(silent) {
+  if (!silent && S.token) api('logout').catch(() => { });
+  S.token = ''; S.user = null; S.meta = null; localStorage.removeItem('sihumas_token'); showLogin();
+  if (silent) toast('Sesi berakhir, silakan login ulang.', 'err');
+}
+function showLogin() {
+  $('#modals').innerHTML = '';
+  $('#app').innerHTML = `<div class="login"><form class="box" id="lf" autocomplete="on"><h1>SIHUMAS-RS</h1><p>Sistem Informasi Humas & Marketing<br>RSU Allam Medica</p><div id="er"></div>
+  <div class="fld"><label for="u">Username</label><input id="u" type="text" autocomplete="username" autocapitalize="none" required></div>
+  <div class="fld"><label for="p">PIN</label><input id="p" type="password" inputmode="numeric" autocomplete="current-password" required></div>
+  <button class="btn pri" style="width:100%;justify-content:center" type="submit">Masuk</button></form></div>`;
+  $('#lf').onsubmit = async e => {
+    e.preventDefault(); const er = $('#er'); er.innerHTML = '';
+    try {
+      const r = await api('login', { username: $('#u').value, pin: $('#p').value });
+      S.token = r.token; localStorage.setItem('sihumas_token', r.token);
+      await loadMeta(); startApp();
+    } catch (err) { er.innerHTML = `<div class="errbox">${esc(err.message)}</div>`; }
+  };
+}
+
+/* ---------- layout & routing ---------- */
+const NAV = [['dashboard', 'Beranda', 'home'], ['perusahaan', 'Perusahaan', 'building'], ['kunjungan', 'Kunjungan', 'pin'], ['mou', 'MOU', 'file'], ['persetujuan', 'Persetujuan', 'check']];
+const TITLES = { dashboard: 'Beranda', perusahaan: 'Perusahaan / Mitra', kunjungan: 'Kunjungan', mou: 'MOU & Kerja Sama', persetujuan: 'Persetujuan', pengaturan: 'Pengaturan' };
+function navHtml(cls) {
+  const items = NAV.concat(S.user.is_admin && cls === 'side' ? [['pengaturan', 'Pengaturan', 'gear']] : []);
+  return items.map(([k, l, i]) => `<button class="nv ${S.view === k || (k === 'mou' && S.view === 'mouDetail') ? 'on' : ''}" data-act="go" data-v="${k}">${ic(i)}<span>${l}</span>${k === 'persetujuan' ? `<b class="badge" id="bdg" ${S.badge ? '' : 'hidden'}>${S.badge}</b>` : ''}</button>`).join('');
+}
+function startApp() {
+  $('#app').innerHTML = `<div class="shell"><aside class="side"><div class="brand"><b>SIHUMAS-RS</b><span>${esc(S.meta.settings.nama_rs)}</span></div><div id="sn">${navHtml('side')}</div>
+    <div class="me"><b>${esc(S.user.nama)}</b><small>${esc(S.user.role_nama)}</small></div></aside>
+    <div class="main"><header class="top"><h1 id="ttl"></h1><button class="avatar" data-act="menu">${ic('key')}<span>${esc(S.user.nama)}</span></button></header><div id="content"></div></div>
+    <nav class="bottom" id="bn">${navHtml('bottom')}</nav></div>`;
+  route();
+  refreshBadge();
+}
+function paintNav() {
+  if (!$('#sn')) return; $('#sn').innerHTML = navHtml('side'); $('#bn').innerHTML = navHtml('bottom');
+}
+async function refreshBadge() { try { const r = await api('inbox'); S.badge = r.menunggu.length; paintNav(); } catch (e) { } }
+function go(view, arg) { location.hash = '#/' + view + (arg ? '/' + arg : ''); }
+function route() {
+  if (!S.user) return;
+  const seg = location.hash.replace(/^#\/?/, '').split('/');
+  let v = seg[0] || 'dashboard'; S.arg = seg[1] || null;
+  if (v === 'mou' && S.arg) v = 'mouDetail';
+  if (!VIEWS[v] || (v === 'pengaturan' && !S.user.is_admin)) v = 'dashboard';
+  S.view = v; paintNav();
+  $('#ttl').textContent = TITLES[v === 'mouDetail' ? 'mou' : v] || '';
+  $('#content').innerHTML = '<div class="empty">Memuat…</div>';
+  window.scrollTo(0, 0);
+  VIEWS[v]().catch(e => { $('#content').innerHTML = `<div class="errbox">${esc(e.message)}</div>`; });
+}
+window.addEventListener('hashchange', route);
+
+const ACT = {};
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-act]'); if (!t) return;
+  const f = ACT[t.dataset.act]; if (f) { e.preventDefault(); safe(f)(t, e); }
+});
+ACT.go = t => { if (t.dataset.flt) { const [k, o] = JSON.parse(t.dataset.flt); Object.assign(S.f[k], o); } go(t.dataset.v, t.dataset.arg); };
+ACT.menu = () => {
+  const m = modal('Akun', `<p><b>${esc(S.user.nama)}</b><br><span class="mute">${esc(S.user.role_nama)} · @${esc(S.user.username)}</span></p>
+    <div class="actions" style="flex-direction:column;align-items:stretch">${S.user.is_admin ? `<button class="btn" data-act="go-set">${ic('gear')} Pengaturan sistem</button>` : ''}<button class="btn" data-act="pin">${ic('key')} Ganti PIN</button><button class="btn bad" data-act="logout">${ic('out')} Keluar</button></div>`);
+  S.menuModal = m;
+};
+ACT['go-set'] = () => { S.menuModal?.close(); go('pengaturan'); };
+ACT.logout = () => { S.menuModal?.close(); doLogout(false); };
+ACT.pin = () => {
+  S.menuModal?.close();
+  formModal({ title: 'Ganti PIN', defs: [{ key: 'old', label: 'PIN lama', tipe: 'text', wajib: true }, { key: 'new', label: 'PIN baru (4–8 angka)', tipe: 'text', wajib: true }], values: {}, onSave: async (v, m) => { await api('changePin', v); m.close(); toast('PIN berhasil diganti.', 'ok'); } });
+};
+
+const VIEWS = {};
+const hasInput = () => S.user.can_input;
+</script>
+<script>
+/* ====================================================================
+   VIEW: BERANDA
+   ==================================================================== */
+VIEWS.dashboard = async function () {
+  const d = await api('dashboard'); S.badge = d.menunggu_saya; paintNav();
+  const k = (label, val, sub, tone, v, flt) => `<button class="kpi ${tone || ''}" data-act="go" data-v="${v}" ${flt ? `data-flt='${esc(JSON.stringify(flt))}'` : ''}><span>${label}</span><b>${val}</b><small>${sub || ''}</small></button>`;
+  const maxB = Math.max(1, ...d.kunjungan_per_bulan.map(b => b.jumlah));
+  const order = ['Prospek', 'Dikunjungi', 'Proses MOU', 'MOU Aktif', 'MOU Berakhir', 'Tidak Lanjut'];
+  const maxF = Math.max(1, ...Object.values(d.funnel));
+  $('#content').innerHTML = `
+  <div class="kpis">
+    ${k('Perusahaan terdata', fmtNum(d.total_perusahaan), d.perusahaan_tanpa_mou + ' belum ber-MOU', '', 'perusahaan')}
+    ${k('Kunjungan bulan ini', fmtNum(d.kunjungan_bulan_ini), 'Total ' + fmtNum(d.kunjungan_total), 'info', 'kunjungan')}
+    ${k('MOU aktif', fmtNum(d.mou_aktif), '', 'ok', 'mou', ['mou', { st: 'Aktif', q: '' }])}
+    ${k('Berakhir ≤ 90 hari', fmtNum(d.akan_berakhir), d.mou_kadaluarsa + ' sudah kadaluarsa', d.akan_berakhir ? 'warn' : '', 'mou', ['mou', { st: 'Akan Berakhir', q: '' }])}
+    ${k('MOU dalam proses', fmtNum(d.mou_proses), d.mou_draft + ' draft/revisi', '', 'mou', ['mou', { st: 'Diproses', q: '' }])}
+    ${k('Menunggu saya', fmtNum(d.menunggu_saya), 'persetujuan', d.menunggu_saya ? 'bad' : '', 'persetujuan')}
+  </div>
+  <div class="grid g2">
+    <div class="card"><div class="ch"><h3>MOU segera berakhir</h3></div>
+      ${d.segera_berakhir.length ? d.segera_berakhir.map(m => `<div class="li" data-act="go" data-v="mou" data-arg="${esc(m.id)}"><div><b>${esc(m.judul)}</b><div class="sm mute">${esc(m.perusahaan_nama)} · berakhir ${fmtDate(m.tgl_berakhir)}${m.auto_perpanjang ? ' · perpanjangan otomatis' : ''}</div></div>${sisaChip(m.sisa_hari)}</div>`).join('') : '<div class="empty">Tidak ada MOU yang berakhir dalam 180 hari.</div>'}
+    </div>
+    <div class="card"><div class="ch"><h3>Tindak lanjut kunjungan (±14 hari)</h3></div>
+      ${d.tindak_lanjut.length ? d.tindak_lanjut.map(t => `<div class="li" data-act="go" data-v="perusahaan" data-arg="${esc(t.perusahaan_id)}"><div><b>${esc(t.perusahaan_nama)}</b><div class="sm mute">${esc(t.tindak_lanjut)}</div></div><span class="sm">${fmtDate(t.tgl_tindak_lanjut)}</span></div>`).join('') : '<div class="empty">Tidak ada jadwal tindak lanjut.</div>'}
+    </div>
+    <div class="card"><div class="ch"><h3>Kunjungan 6 bulan terakhir</h3></div>
+      <div class="bars">${d.kunjungan_per_bulan.map(b => `<div class="bar"><em>${b.jumlah}</em><i style="height:${Math.round(b.jumlah / maxB * 80)}%"></i><span>${BLN[+b.bulan.slice(5) - 1]}</span></div>`).join('')}</div>
+    </div>
+    <div class="card"><div class="ch"><h3>Posisi perusahaan</h3></div>
+      ${order.filter(o => d.funnel[o]).map(o => `<div class="fun"><span>${o}</span><div><i style="width:${Math.round(d.funnel[o] / maxF * 100)}%"></i></div><b>${d.funnel[o]}</b></div>`).join('') || '<div class="empty">Belum ada data.</div>'}
+    </div>
+  </div>`;
+};
+
+/* ====================================================================
+   VIEW: PERUSAHAAN
+   ==================================================================== */
+VIEWS.perusahaan = async function () {
+  if (S.arg) { const id = S.arg; history.replaceState(null, '', '#/perusahaan'); S.arg = null; setTimeout(() => safe(openPerusahaan)(id), 0); }
+  const rows = await api('perusahaan_list'); S.cache.prs = rows;
+  const f = S.f.prs; const sts = ['Prospek', 'Dikunjungi', 'Proses MOU', 'MOU Aktif', 'MOU Berakhir', 'Tidak Lanjut'];
+  $('#content').innerHTML = `<div class="bar-tools"><div class="grow"><input type="text" id="q" placeholder="Cari nama, kota, PIC…" value="${esc(f.q)}"></div>
+    <select id="st" style="width:auto"><option value="">Semua status</option>${sts.map(s => `<option ${f.st === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
+    <button class="btn" data-act="prs-csv">${ic('download')} CSV</button>${hasInput() ? `<button class="btn pri" data-act="prs-new">${ic('plus')} Tambah</button>` : ''}</div><div id="lst"></div>`;
+  const draw = () => {
+    f.q = $('#q').value; f.st = $('#st').value; const q = f.q.toLowerCase();
+    S.cache.prsView = rows.filter(r => (!f.st || r.status_efektif === f.st) && (!q || [r.nama, r.kota, r.pic_nama, r.jenis].join(' ').toLowerCase().includes(q)));
+    $('#lst').innerHTML = tableHtml(prsCols, S.cache.prsView, r => `data-act="prs-open" data-id="${esc(r.id)}"`);
+  };
+  $('#q').oninput = draw; $('#st').onchange = draw; draw();
+};
+const prsCols = [
+  { h: 'Perusahaan', v: r => r.nama, html: r => `<b>${esc(r.nama)}</b><small>${esc(r.jenis)}${r.kota ? ' · ' + esc(r.kota) : ''}</small>` },
+  { h: 'PIC', v: r => r.pic_nama + ' ' + r.pic_kontak, html: r => `${esc(r.pic_nama) || '–'}<small>${esc(r.pic_jabatan)} ${esc(r.pic_kontak)}</small>` },
+  { h: 'Kunjungan', v: r => r.jumlah_kunjungan, html: r => `${r.jumlah_kunjungan}<small>${r.kunjungan_terakhir ? 'terakhir ' + fmtDate(r.kunjungan_terakhir) : ''}</small>` },
+  { h: 'MOU', v: r => r.jumlah_mou, html: r => `${r.jumlah_mou} <small>${r.mou_aktif} aktif</small>` },
+  { h: 'Status', v: r => r.status_efektif, html: r => chip(r.status_efektif) }
+];
+ACT['prs-csv'] = () => exportCsv('perusahaan.csv', prsCols, S.cache.prsView || []);
+ACT['prs-open'] = t => openPerusahaan(t.dataset.id);
+ACT['prs-new'] = () => perusahaanForm();
+function perusahaanForm(p) {
+  formModal({
+    title: p ? 'Ubah Perusahaan' : 'Tambah Perusahaan', defs: S.meta.defs.perusahaan, values: p || { status: 'Otomatis' }, wide: true,
+    onSave: async (v, m) => {
+      if (p) v.id = p.id; const r = await api('perusahaan_save', v); m.close(); toast('Perusahaan disimpan.', 'ok');
+      await loadMeta(); if (S.view === 'perusahaan') route(); else if (S.view === 'kunjungan') route();
+      if (!p) openPerusahaan(r.id);
+    }
+  });
+}
+async function openPerusahaan(id) {
+  const d = await api('perusahaan_get', { id }); const p = d.perusahaan;
+  const m = modal(p.nama, `<div class="ch"><div>${chip(p.status_efektif)} <span class="mute sm">${esc(p.jenis)}</span></div>
+    <div class="actions" style="margin:0">${hasInput() ? `<button class="btn sm" data-a="kj">${ic('pin')} Kunjungan</button><button class="btn sm" data-a="mou">${ic('file')} Buat MOU</button><button class="btn sm" data-a="edit">${ic('edit')} Ubah</button>` : ''}${S.user.is_admin ? `<button class="btn sm bad" data-a="del">${ic('trash')} Hapus</button>` : ''}</div></div>
+    ${kvHtml(S.meta.defs.perusahaan, p, ['nama', 'jenis', 'status'])}
+    <h4 style="margin:16px 0 6px">Riwayat kunjungan (${d.kunjungan.length})</h4>
+    ${d.kunjungan.length ? d.kunjungan.map(k => `<div class="li" data-kid="${esc(k.id)}"><div><b>${fmtDate(k.tanggal)} · ${esc(k.tujuan)}</b><div class="sm">${esc(k.hasil)}</div>${k.tindak_lanjut ? `<div class="sm mute">Tindak lanjut: ${esc(k.tindak_lanjut)} (${fmtDate(k.tgl_tindak_lanjut)})</div>` : ''}</div><span class="sm mute">${esc(k.petugas)}</span></div>`).join('') : '<div class="empty">Belum ada kunjungan.</div>'}
+    <h4 style="margin:16px 0 6px">MOU (${d.mou.length})</h4>
+    ${d.mou.length ? d.mou.map(x => `<div class="li" data-mid="${esc(x.id)}"><div><b>${esc(x.judul)}</b><div class="sm mute">${esc(x.nomor || 'tanpa nomor')} · ${fmtDate(x.tgl_mulai)} – ${fmtDate(x.tgl_berakhir)}</div></div>${chip(x.status_efektif)}</div>`).join('') : '<div class="empty">Belum ada MOU.</div>'}`, { wide: true });
+  m.el.addEventListener('click', safe(async e => {
+    const a = e.target.closest('[data-a]')?.dataset.a, kid = e.target.closest('[data-kid]')?.dataset.kid, mid = e.target.closest('[data-mid]')?.dataset.mid;
+    if (mid) { m.close(); go('mou', mid); }
+    else if (kid) { const k = d.kunjungan.find(x => x.id === kid); kunjunganForm(k, () => { m.close(); openPerusahaan(id); }); }
+    else if (a === 'kj') kunjunganForm({ perusahaan_id: id }, () => { m.close(); openPerusahaan(id); });
+    else if (a === 'mou') mouForm({ perusahaan_id: id });
+    else if (a === 'edit') { m.close(); perusahaanForm(p); }
+    else if (a === 'del') { if (await confirmBox('Hapus perusahaan "' + p.nama + '" beserta seluruh riwayat kunjungannya?', 'Hapus', true)) { await api('perusahaan_delete', { id }); m.close(); toast('Perusahaan dihapus.', 'ok'); await loadMeta(); route(); } }
+  }));
+}
+
+/* ====================================================================
+   VIEW: KUNJUNGAN
+   ==================================================================== */
+VIEWS.kunjungan = async function () {
+  const rows = await api('kunjungan_list', {}); S.cache.kj = rows; const f = S.f.kj;
+  $('#content').innerHTML = `<div class="bar-tools"><div class="grow"><input type="text" id="q" placeholder="Cari hasil, petugas…" value="${esc(f.q)}"></div>
+    <select id="pid" style="width:auto;max-width:220px"><option value="">Semua perusahaan</option>${S.meta.perusahaan_basic.map(p => `<option value="${esc(p.id)}" ${f.pid === p.id ? 'selected' : ''}>${esc(p.nama)}</option>`).join('')}</select>
+    <input type="date" id="dari" style="width:auto" value="${esc(f.dari)}" title="Dari tanggal"><input type="date" id="smp" style="width:auto" value="${esc(f.sampai)}" title="Sampai tanggal">
+    <button class="btn" data-act="kj-csv">${ic('download')} CSV</button>${hasInput() ? `<button class="btn pri" data-act="kj-new">${ic('plus')} Catat Kunjungan</button>` : ''}</div><div id="lst"></div>`;
+  const draw = () => {
+    f.q = $('#q').value; f.pid = $('#pid').value; f.dari = $('#dari').value; f.sampai = $('#smp').value; const q = f.q.toLowerCase();
+    S.cache.kjView = rows.filter(r => (!f.pid || r.perusahaan_id === f.pid) && (!f.dari || r.tanggal >= f.dari) && (!f.sampai || r.tanggal <= f.sampai) && (!q || [r.hasil, r.petugas, r.perusahaan_nama, r.tindak_lanjut].join(' ').toLowerCase().includes(q)));
+    $('#lst').innerHTML = tableHtml(kjCols, S.cache.kjView, r => `data-act="kj-open" data-id="${esc(r.id)}"`);
+  };
+  ['q', 'pid', 'dari', 'smp'].forEach(i => { $('#' + i).oninput = draw; $('#' + i).onchange = draw; }); draw();
+};
+const kjCols = [
+  { h: 'Tanggal', v: r => r.tanggal, html: r => fmtDate(r.tanggal) },
+  { h: 'Perusahaan', v: r => r.perusahaan_nama, html: r => `<b>${esc(r.perusahaan_nama)}</b><small>${esc(r.tujuan)}</small>` },
+  { h: 'Petugas', v: r => r.petugas },
+  { h: 'Minat', v: r => r.minat, html: r => r.minat ? chip(r.minat, { Tinggi: 'ok', Sedang: 'warn', Rendah: 'bad' }[r.minat] || 'mute') : '–' },
+  { h: 'Hasil', v: r => r.hasil, html: r => `<div style="max-width:340px">${esc(r.hasil)}</div>` },
+  { h: 'Tindak lanjut', v: r => r.tindak_lanjut + ' ' + r.tgl_tindak_lanjut, html: r => r.tindak_lanjut ? `${esc(r.tindak_lanjut)}<small>${fmtDate(r.tgl_tindak_lanjut)}</small>` : '–' }
+];
+ACT['kj-csv'] = () => exportCsv('kunjungan.csv', kjCols, S.cache.kjView || []);
+ACT['kj-new'] = () => kunjunganForm({});
+ACT['kj-open'] = t => { const k = S.cache.kj.find(x => x.id === t.dataset.id); if (hasInput()) kunjunganForm(k); else modal('Kunjungan ' + fmtDate(k.tanggal), kvHtml(S.meta.defs.kunjungan, k)); };
+function kunjunganForm(k, after) {
+  const isNew = !k.id; const lock = k.perusahaan_id && isNew ? ['perusahaan_id'] : [];
+  const vals = isNew ? Object.assign({ tanggal: today(), petugas: S.user.nama, minat: 'Belum Diketahui' }, k) : k;
+  const m = formModal({
+    title: isNew ? 'Catat Kunjungan' : 'Ubah Kunjungan', defs: S.meta.defs.kunjungan, values: vals, lock, wide: true,
+    onSave: async (v, m) => { if (!isNew) v.id = k.id; await api('kunjungan_save', v); m.close(); toast('Kunjungan disimpan.', 'ok'); if (after) after(); else route(); }
+  });
+  if (!isNew && (S.user.is_admin || k.created_by === S.user.nama)) {
+    const b = document.createElement('button'); b.className = 'btn bad'; b.innerHTML = ic('trash') + ' Hapus'; m.foot.prepend(b);
+    b.onclick = safe(async () => { if (await confirmBox('Hapus catatan kunjungan ini?', 'Hapus', true)) { await api('kunjungan_delete', { id: k.id }); m.close(); toast('Kunjungan dihapus.', 'ok'); if (after) after(); else route(); } });
+  }
+}
+
+/* ====================================================================
+   VIEW: DAFTAR MOU
+   ==================================================================== */
+const MOU_FILTERS = ['Semua', 'Draft', 'Diproses', 'Revisi', 'Aktif', 'Akan Berakhir', 'Kadaluarsa', 'Ditolak'];
+VIEWS.mou = async function () {
+  const rows = await api('mou_list'); S.cache.mou = rows; const f = S.f.mou;
+  $('#content').innerHTML = `<div class="bar-tools"><div class="grow"><input type="text" id="q" placeholder="Cari judul, nomor, perusahaan…" value="${esc(f.q)}"></div>
+    <button class="btn" data-act="mou-csv">${ic('download')} CSV</button>${hasInput() ? `<button class="btn pri" data-act="mou-new">${ic('plus')} Buat MOU</button>` : ''}</div>
+    <div class="chips" id="chs" style="margin-bottom:12px"></div><div id="lst"></div>`;
+  const draw = () => {
+    f.q = $('#q').value; const q = f.q.toLowerCase();
+    const match = m => f.st === 'Semua' || (f.st === 'Akan Berakhir' ? (m.status_efektif === 'Aktif' && m.sisa_hari !== null && m.sisa_hari <= 90) : m.status_efektif === f.st);
+    $('#chs').innerHTML = MOU_FILTERS.map(s => `<button class="pill ${f.st === s ? 'on' : ''}" data-s="${s}">${s}</button>`).join('');
+    S.cache.mouView = rows.filter(m => match(m) && (!q || [m.judul, m.nomor, m.perusahaan_nama].join(' ').toLowerCase().includes(q))).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+    $('#lst').innerHTML = tableHtml(mouCols, S.cache.mouView, r => `data-act="mou-open" data-id="${esc(r.id)}"`);
+  };
+  $('#q').oninput = draw; $('#chs').onclick = e => { const s = e.target.closest('[data-s]')?.dataset.s; if (s) { f.st = s; draw(); } }; draw();
+};
+const mouCols = [
+  { h: 'Kerja sama', v: r => r.judul, html: r => `<b>${esc(r.judul)}</b><small>${esc(r.nomor || 'belum bernomor')}</small>` },
+  { h: 'Mitra', v: r => r.perusahaan_nama },
+  { h: 'Periode', v: r => r.tgl_mulai + ' s/d ' + r.tgl_berakhir, html: r => `${fmtDate(r.tgl_mulai)}<small>s/d ${fmtDate(r.tgl_berakhir)}</small>` },
+  { h: 'Sisa', v: r => r.status_efektif === 'Aktif' ? r.sisa_hari : '', html: r => r.status_efektif === 'Aktif' || r.status_efektif === 'Kadaluarsa' ? sisaChip(r.sisa_hari) : '–' },
+  { h: 'Status', v: r => r.status_efektif + (r.step_sekarang ? ' (' + r.step_sekarang + ')' : ''), html: r => chip(r.status_efektif) + (r.step_sekarang ? `<small>Menunggu: ${esc(r.step_sekarang)}</small>` : '') },
+  { h: 'Kesesuaian', v: r => r.kesesuaian, html: r => chip(r.kesesuaian) }
+];
+ACT['mou-csv'] = () => exportCsv('mou.csv', mouCols, S.cache.mouView || []);
+ACT['mou-open'] = t => go('mou', t.dataset.id);
+ACT['mou-new'] = () => mouForm({});
+function mouForm(m0) {
+  const isNew = !m0.id; const eff = m0.status;
+  const limited = !isNew && eff === 'Disetujui';
+  const LIM = ['nomor', 'link_dokumen', 'catatan', 'auto_perpanjang'];
+  const defs = S.meta.defs.mou;
+  const lock = limited ? defs.map(f => f.key).filter(k => LIM.indexOf(k) < 0) : (m0.perusahaan_id && isNew ? ['perusahaan_id'] : []);
+  const vals = isNew ? Object.assign({ auto_perpanjang: false }, m0) : m0;
+  formModal({
+    title: isNew ? 'Buat MOU / Kerja Sama' : (limited ? 'Ubah Data Administratif MOU' : 'Ubah MOU'), defs, values: vals, lock, wide: true,
+    pre: limited ? '<div class="warnbox">MOU sudah disetujui — hanya nomor, link dokumen, catatan, dan perpanjangan otomatis yang dapat diubah. Untuk mengubah isi, gunakan "Salin sebagai Draft".</div>' : (isNew ? '<div class="warnbox" style="background:var(--info-l);border-color:#bcd0ff;color:#1e3a8a">Isi seperlunya sebagai Draft dulu. Kelengkapan wajib diperiksa saat MOU diajukan untuk persetujuan.</div>' : ''),
+    onSave: async (v, m) => { if (!isNew) v.id = m0.id; const r = await api('mou_save', v); m.close(); toast('MOU disimpan.', 'ok'); if (isNew) go('mou', r.mou.id); else { S.cache.detail = r; route(); } }
+  });
+}
+
+/* ====================================================================
+   VIEW: DETAIL MOU
+   ==================================================================== */
+const opText = i => {
+  const v = x => (x === 'true' ? 'Ya' : x === 'false' ? 'Tidak' : x); const m = { '>=': '≥', '<=': '≤', '>': '>', '<': '<', '=': '=', '!=': '≠' };
+  if (i.op === 'between') return `${v(i.nilai)}–${v(i.nilai2)}`; if (i.op === 'ada') return 'harus terisi'; if (i.op === 'kosong') return 'harus kosong'; if (i.op === 'in') return 'salah satu: ' + i.nilai; return (m[i.op] || i.op) + ' ' + v(i.nilai);
+};
+function analisisCard(a, title, hint) {
+  const sub = a.items.length === 0;
+  return `<div class="card"><div class="ch"><h3>${esc(title)}</h3>${chip(a.verdict)}</div>
+    ${hint ? `<div class="sm mute" style="margin-bottom:6px">${esc(hint)}</div>` : ''}
+    ${sub ? '<div class="empty">Belum ada kriteria untuk tahap ini. Admin dapat menambahkannya di Pengaturan › Kriteria.</div>' : `
+    <div class="sm">Skor <b>${a.skor ?? '–'}%</b> · ambang kesesuaian ${a.ambang}% · wajib gagal ${a.wajib_gagal} · saran gagal ${a.saran_gagal}</div>
+    <div class="meter"><i style="width:${a.skor || 0}%"></i><b style="left:${a.ambang}%"></b></div>
+    ${a.items.map(i => `<div class="crit"><span class="m ${i.status}">${i.status === 'lulus' ? '✓' : i.status === 'gagal' ? '✗' : '–'}</span><div style="flex:1"><div><b>${esc(i.nama)}</b> ${chip(i.tingkat === 'wajib' ? 'Wajib' : 'Saran', i.tingkat === 'wajib' ? 'info' : 'mute')}</div>
+      <div class="sm mute">${esc(fieldLabel(i.field))}: <b style="color:var(--ink)">${i.aktual === null || i.aktual === '' ? '–' : esc(yn(i.aktual))}</b> · syarat ${esc(opText(i))}</div>
+      ${i.status === 'gagal' ? `<div class="sm" style="color:var(--bad)">${esc(i.note || i.pesan)}${i.note && i.pesan ? ' — ' + esc(i.pesan) : ''}</div>` : ''}${i.status === 'na' ? `<div class="sm mute">${esc(i.note)}</div>` : ''}</div></div>`).join('')}`}</div>`;
+}
+const STEP_ICON = { Disetujui: '✓', Dilewati: '↷', Ditolak: '✗', Revisi: '↺', Dibatalkan: '–', Menunggu: '' };
+function timelineHtml(rows, curId) {
+  return `<ol class="tl">${rows.map((a, i) => `<li><span class="dot ${a.id === curId ? 'now' : a.status}">${a.id === curId ? i + 1 : (STEP_ICON[a.status] || i + 1)}</span>
+    <div style="flex:1"><div><b>${esc(a.nama_step)}</b> <span class="mute sm">· ${esc(roleName(a.role_key))}</span> ${a.id === curId ? chip('Giliran sekarang', 'info') : (a.status !== 'Menunggu' ? chip(a.status) : '<span class="sm mute">antrian</span>')}</div>
+    ${a.approver ? `<div class="sm mute">${esc(a.approver)} · ${fmtDT(a.tanggal)}</div>` : ''}${a.catatan ? `<div class="note">${esc(a.catatan)}</div>` : ''}</div></li>`).join('')}</ol>`;
+}
+VIEWS.mouDetail = async function () {
+  const id = S.arg; const d = await api('mou_get', { id }); S.cache.detail = d; renderMouDetail(d);
+};
+function renderMouDetail(d) {
+  const m = d.mou, eff = m.status_efektif; const canEdit = hasInput() && (m.status === 'Draft' || m.status === 'Revisi' || m.status === 'Disetujui');
+  const rounds = {}; d.approvals.forEach(a => (rounds[a.putaran] = rounds[a.putaran] || []).push(a));
+  const rk = Object.keys(rounds).map(Number).sort((a, b) => b - a); const curRound = rk[0];
+  const mouDefs = S.meta.defs.mou.filter(f => ['perusahaan_id', 'judul', 'nomor'].indexOf(f.key) < 0);
+  const ev = d.analisis.evaluasi;
+  $('#content').innerHTML = `
+  <div class="back"><button class="btn ghost sm" data-act="go" data-v="mou">${ic('left')} Daftar MOU</button></div>
+  <div class="card head"><div><h2>${esc(m.judul)}</h2><div class="mute">${esc(m.nomor || 'belum bernomor')} · <a href="#/perusahaan" data-act="prs-from" data-id="${esc(m.perusahaan_id)}">${esc(m.perusahaan_nama)}</a></div></div>
+    <div style="text-align:right">${chip(eff)} ${chip(d.analisis.pengajuan.verdict)}${m.step_sekarang ? `<div class="sm mute" style="margin-top:4px">Menunggu: ${esc(m.step_sekarang)}</div>` : ''}${m.ref_mou ? `<div class="sm"><a href="#/mou/${esc(m.ref_mou)}">Perpanjangan dari MOU sebelumnya</a></div>` : ''}</div></div>
+  <div class="actions">
+    ${hasInput() && (m.status === 'Draft' || m.status === 'Revisi') ? `<button class="btn pri" data-act="d-submit">${ic('check')} ${m.status === 'Revisi' ? 'Ajukan Ulang' : 'Ajukan Persetujuan'}</button>` : ''}
+    ${canEdit ? `<button class="btn" data-act="d-edit">${ic('edit')} ${m.status === 'Disetujui' ? 'Ubah Nomor / Dokumen' : 'Ubah'}</button>` : ''}
+    ${d.can_act ? `<button class="btn ok" data-act="d-dec" data-k="setuju">Setujui</button><button class="btn warn" data-act="d-dec" data-k="revisi">Minta Revisi</button><button class="btn bad" data-act="d-dec" data-k="tolak">Tolak</button>` : ''}
+    ${S.user.is_admin && m.status === 'Diproses' ? `<button class="btn" data-act="d-sisip">${ic('plus')} Sisipkan Tahap</button><button class="btn" data-act="d-lewati">Lewati Tahap</button>` : ''}
+    ${hasInput() && ['Aktif', 'Kadaluarsa', 'Belum Mulai'].indexOf(eff) >= 0 ? `<button class="btn" data-act="d-ext">${ic('repeat')} Perpanjang</button>` : ''}
+    ${hasInput() ? `<button class="btn" data-act="d-copy">${ic('copy')} Salin sebagai Draft</button>` : ''}
+    ${hasInput() && ['Draft', 'Revisi', 'Ditolak'].indexOf(m.status) >= 0 ? `<button class="btn bad" data-act="d-del">${ic('trash')} Hapus</button>` : ''}
+  </div>
+  ${m.status === 'Revisi' || m.status === 'Ditolak' ? `<div class="warnbox"><b>${m.status === 'Revisi' ? 'Dikembalikan untuk revisi' : 'Ditolak'}.</b> Lihat catatan pada tahap terakhir di bawah.${m.status === 'Ditolak' ? ' Gunakan "Salin sebagai Draft" untuk mengajukan versi baru.' : ''}</div>` : ''}
+  <div class="grid g2">
+    <div>
+      <div class="card"><div class="ch"><h3>Informasi kerja sama</h3></div>${kvHtml(mouDefs, m)}
+        <dl class="kv"><div><dt>Durasi</dt><dd>${m.durasi_bulan ?? '–'} bulan</dd></div><div><dt>Sisa masa berlaku</dt><dd>${m.sisa_hari === null ? '–' : (m.sisa_hari < 0 ? 'Lewat ' + Math.abs(m.sisa_hari) + ' hari' : fmtNum(m.sisa_hari) + ' hari')}</dd></div></dl></div>
+    </div>
+    <div>${analisisCard(d.analisis.pengajuan, 'Kesesuaian isi MOU', 'Dibandingkan dengan kriteria kebijakan (fase pengajuan).')}</div>
+  </div>
+  <div class="card"><div class="ch"><h3>Alur persetujuan</h3>${curRound ? `<span class="sm mute">Putaran ${curRound}</span>` : ''}</div>
+    ${curRound ? timelineHtml(rounds[curRound], d.current && d.current.id) : '<div class="empty">Belum diajukan. Setelah diajukan, tahap persetujuan akan tampil di sini.</div>'}
+    ${rk.slice(1).map(r => `<details class="old"><summary>Putaran ${r} (sebelumnya)</summary>${timelineHtml(rounds[r])}</details>`).join('')}</div>
+  ${ev ? analisisCard(ev, 'Evaluasi kinerja kerja sama', 'Capaian realisasi dibanding target, dihitung prorata sejak tanggal mulai.') : ''}
+  ${m.status === 'Disetujui' ? `<div class="card"><div class="ch"><h3>Realisasi bulanan</h3>${hasInput() ? `<button class="btn sm pri" data-act="r-new">${ic('plus')} Catat Realisasi</button>` : ''}</div>
+    ${d.realisasi.length ? tableHtml([{ h: 'Periode', v: r => r.periode }, { h: 'Peserta', v: r => fmtNum(r.jumlah_peserta) }, { h: 'Pendapatan', v: r => fmtRp(r.pendapatan) }, { h: 'Catatan', v: r => r.catatan }], d.realisasi, hasInput() ? (r => `data-act="r-edit" data-id="${esc(r.id)}"`) : null) : '<div class="empty">Belum ada realisasi tercatat.</div>'}
+    <div class="sm mute" style="margin-top:8px">Total: ${fmtNum(d.ctx.total_realisasi_peserta ?? 0)} peserta · ${fmtRp(d.ctx.total_realisasi_pendapatan ?? 0)} · capaian peserta ${d.ctx.capaian_peserta_persen ?? '–'}% · capaian pendapatan ${d.ctx.capaian_pendapatan_persen ?? '–'}%</div></div>` : ''}
+  <div class="card"><div class="ch"><h3>Riwayat aktivitas</h3></div>${d.log.length ? d.log.map(l => `<div class="li" style="cursor:default"><div><b>${esc(l.aksi)}</b> <span class="sm">${esc(l.detail)}</span></div><span class="sm mute">${esc(l.user)} · ${fmtDT(l.waktu)}</span></div>`).join('') : '<div class="empty">–</div>'}</div>`;
+}
+const curDetail = () => S.cache.detail;
+const refreshDetail = d => { S.cache.detail = d; if (S.view === 'mouDetail') renderMouDetail(d); refreshBadge(); };
+ACT['prs-from'] = t => go('perusahaan', t.dataset.id);
+ACT['d-edit'] = () => { const m = curDetail().mou; mouForm(m); };
+ACT['d-submit'] = async () => {
+  const d = curDetail(); const a = d.analisis.pengajuan;
+  const warn = a.verdict === 'Tidak Sesuai' ? `<div class="warnbox">Kesesuaian saat ini <b>Tidak Sesuai</b> (${a.wajib_gagal} kriteria wajib belum terpenuhi). MOU tetap dapat diajukan, namun penyetuju akan melihat peringatan ini.</div>` : '';
+  const ok = await new Promise(res => { const m = modal('Ajukan untuk persetujuan', `${warn}<p>MOU akan dikirim melalui alur persetujuan dan tidak dapat diubah selama proses berjalan. Lanjutkan?</p>`, { foot: '<button class="btn" data-n>Batal</button><button class="btn pri" data-y>Ajukan</button>' }); $('[data-n]', m.el).onclick = () => { m.close(); res(false); }; $('[data-y]', m.el).onclick = () => { m.close(); res(true); }; $('[data-close]', m.el).onclick = () => { m.close(); res(false); }; });
+  if (!ok) return; refreshDetail(await api('mou_submit', { id: d.mou.id })); toast('MOU diajukan.', 'ok');
+};
+ACT['d-dec'] = async t => {
+  const d = curDetail(), k = t.dataset.k, a = d.analisis.pengajuan;
+  const pre = a.verdict !== 'Sesuai' && a.verdict !== 'Belum Dinilai' ? `<div class="warnbox">Kesesuaian MOU: <b>${esc(a.verdict)}</b> (skor ${a.skor}%, ${a.wajib_gagal} kriteria wajib gagal).</div>` : '';
+  const cfg = { setuju: { title: 'Setujui tahap "' + d.current.nama_step + '"', label: 'Catatan (opsional)', ok: 'Setujui', cls: 'ok', req: false }, revisi: { title: 'Minta revisi', label: 'Apa yang perlu direvisi?', ok: 'Kirim Revisi', cls: 'warn', req: true }, tolak: { title: 'Tolak MOU', label: 'Alasan penolakan', ok: 'Tolak', cls: 'bad', req: true } }[k];
+  const note = await askNote({ title: cfg.title, label: cfg.label, required: cfg.req, okLabel: cfg.ok, cls: cfg.cls, pre }); if (note === null) return;
+  refreshDetail(await api('mou_decide', { id: d.mou.id, keputusan: k, catatan: note })); toast('Keputusan tersimpan.', 'ok');
+};
+ACT['d-lewati'] = async () => {
+  const d = curDetail(); if (!d.current) return;
+  const note = await askNote({ title: 'Lewati tahap "' + d.current.nama_step + '"', label: 'Alasan melewati tahap (tercatat di riwayat)', required: true, okLabel: 'Lewati' }); if (note === null) return;
+  refreshDetail(await api('mou_decide', { id: d.mou.id, keputusan: 'lewati', catatan: note })); toast('Tahap dilewati.', 'ok');
+};
+ACT['d-sisip'] = () => {
+  const d = curDetail(); const cr = d.approvals.filter(a => a.putaran === d.mou.putaran || String(a.putaran) === String(d.mou.putaran)).sort((a, b) => a.urut - b.urut); const cur = d.current;
+  const opts = cr.filter(a => Number(a.urut) >= Number(cur.urut) - 1).map(a => ({ v: a.urut, l: 'Setelah: ' + a.urut + '. ' + a.nama_step }));
+  formModal({
+    title: 'Sisipkan tahap persetujuan', saveLabel: 'Sisipkan', values: { setelah_urut: cur.urut },
+    defs: [{ key: 'nama_step', label: 'Nama tahap', tipe: 'text', wajib: true }, { key: 'role_key', label: 'Peran penyetuju', tipe: 'select', opsi: S.meta.roles.map(r => ({ v: r.id, l: r.nama })).concat([{ v: 'admin', l: 'Administrator' }]), wajib: true }, { key: 'setelah_urut', label: 'Posisi', tipe: 'select', opsi: opts, wajib: true }],
+    pre: '<p class="sm mute">Tahap tambahan hanya berlaku untuk MOU ini. Untuk mengubah alur seterusnya, gunakan Pengaturan › Alur.</p>',
+    onSave: async (v, m) => { const r = await api('mou_sisip', Object.assign({ id: d.mou.id }, v)); m.close(); refreshDetail(r); toast('Tahap disisipkan.', 'ok'); }
+  });
+};
+ACT['d-ext'] = async () => { const d = curDetail(); if (!await confirmBox('Buat draf perpanjangan dengan periode lanjutan dari MOU ini?', 'Buat Draft')) return; const r = await api('mou_salin', { id: d.mou.id, mode: 'perpanjang' }); toast('Draf perpanjangan dibuat.', 'ok'); go('mou', r.mou.id); };
+ACT['d-copy'] = async () => { const d = curDetail(); const r = await api('mou_salin', { id: d.mou.id, mode: 'salin' }); toast('Draft salinan dibuat.', 'ok'); go('mou', r.mou.id); };
+ACT['d-del'] = async () => { const d = curDetail(); if (!await confirmBox('Hapus MOU "' + d.mou.judul + '" beserta riwayat persetujuannya?', 'Hapus', true)) return; await api('mou_delete', { id: d.mou.id }); toast('MOU dihapus.', 'ok'); go('mou'); };
+function realisasiForm(r) {
+  const d = curDetail(); const isNew = !r;
+  const m = formModal({
+    title: isNew ? 'Catat Realisasi' : 'Ubah Realisasi', defs: S.meta.defs.realisasi, values: r || { periode: today().slice(0, 7) },
+    onSave: async (v, m) => { v.mou_id = d.mou.id; if (r) v.id = r.id; const res = await api('realisasi_save', v); m.close(); refreshDetail(res); toast('Realisasi disimpan.', 'ok'); }
+  });
+  if (!isNew) { const b = document.createElement('button'); b.className = 'btn bad'; b.innerHTML = ic('trash') + ' Hapus'; m.foot.prepend(b); b.onclick = safe(async () => { if (await confirmBox('Hapus data realisasi periode ' + r.periode + '?', 'Hapus', true)) { const res = await api('realisasi_delete', { id: r.id }); m.close(); refreshDetail(res); } }); }
+}
+ACT['r-new'] = () => realisasiForm(null);
+ACT['r-edit'] = t => realisasiForm(curDetail().realisasi.find(x => x.id === t.dataset.id));
+
+/* ====================================================================
+   VIEW: PERSETUJUAN
+   ==================================================================== */
+VIEWS.persetujuan = async function () {
+  const r = await api('inbox'); S.badge = r.menunggu.length; paintNav();
+  $('#content').innerHTML = `<div class="card"><div class="ch"><h3>Menunggu persetujuan ${S.user.is_admin ? '(semua tahap — admin)' : 'Anda'}</h3></div>
+    ${r.menunggu.length ? r.menunggu.map(m => `<div class="li" data-act="mou-open" data-id="${esc(m.id)}"><div><b>${esc(m.judul)}</b><div class="sm mute">${esc(m.perusahaan_nama)} · tahap <b>${esc(m.step_sekarang)}</b> · menunggu ${m.hari_menunggu} hari</div></div><div style="text-align:right">${chip(m.kesesuaian)}</div></div>`).join('') : '<div class="empty">Tidak ada MOU yang menunggu keputusan Anda. 🎉</div>'}</div>
+    <div class="card"><div class="ch"><h3>Riwayat keputusan saya</h3></div>
+    ${r.riwayat.length ? r.riwayat.map(h => `<div class="li" data-act="mou-open" data-id="${esc(h.mou_id)}"><div><b>${esc(h.judul)}</b><div class="sm mute">${esc(h.perusahaan_nama)} · ${esc(h.nama_step)}${h.catatan ? ' — ' + esc(h.catatan) : ''}</div></div><div style="text-align:right">${chip(h.status)}<div class="sm mute">${fmtDT(h.tanggal)}</div></div></div>`).join('') : '<div class="empty">Belum ada.</div>'}</div>`;
+};
+</script>
+<script>
+/* ====================================================================
+   VIEW: PENGATURAN (admin)
+   ==================================================================== */
+const SET_TABS = [['alur', 'Alur Persetujuan'], ['kriteria', 'Kriteria Analisis'], ['kolom', 'Kolom Tambahan'], ['peran', 'Peran'], ['user', 'Pengguna'], ['umum', 'Umum & Pengingat'], ['log', 'Log']];
+VIEWS.pengaturan = async function () {
+  $('#content').innerHTML = `<div class="tabs">${SET_TABS.map(([k, l]) => `<button class="tab ${S.tab === k ? 'on' : ''}" data-act="stab" data-k="${k}">${l}</button>`).join('')}</div><div id="sb"></div>`;
+  await TABS[S.tab]();
+};
+ACT.stab = t => { S.tab = t.dataset.k; route(); };
+const TABS = {};
+const yv = v => v === true ? 'Y' : 'N';
+const reload = async () => { await loadMeta(); route(); };
+const condText = a => a.kond_field ? `Hanya jika ${fieldLabel(a.kond_field)} ${a.kond_op === 'between' ? 'antara ' + a.kond_nilai + '–' + a.kond_nilai2 : a.kond_op + ' ' + (a.kond_nilai || '')}` : '';
+const roleOpts = () => S.meta.roles.map(r => ({ v: r.id, l: r.nama })).concat([{ v: 'admin', l: 'Administrator' }]);
+const condFieldOpts = () => [{ v: '', l: '— tanpa kondisi (selalu ikut) —' }].concat(mouFields().filter(f => ['text', 'number', 'select', 'checkbox', 'date'].indexOf(f.tipe) >= 0).map(f => ({ v: f.key, l: f.label })));
+const opOpts = () => S.meta.ops.map(o => ({ v: o, l: { '>=': '≥ (lebih/sama)', '<=': '≤ (kurang/sama)', '>': '> (lebih dari)', '<': '< (kurang dari)', '=': '= (sama dengan)', '!=': '≠ (tidak sama)', between: 'antara (nilai – nilai 2)', in: 'salah satu dari (pisah koma)', ada: 'terisi / Ya', kosong: 'kosong / Tidak' }[o] || o }));
+const upDown = (act, id, i, n) => `<button class="btn sm ghost" data-act="${act}" data-id="${esc(id)}" data-d="-1" ${i === 0 ? 'disabled' : ''} aria-label="Naik">${ic('up')}</button><button class="btn sm ghost" data-act="${act}" data-id="${esc(id)}" data-d="1" ${i === n - 1 ? 'disabled' : ''} aria-label="Turun">${ic('down')}</button>`;
+async function moveRow(sheet, list, id, d) {
+  const ids = list.map(x => x.id); const i = ids.indexOf(id); const j = i + Number(d); if (j < 0 || j >= ids.length) return;
+  [ids[i], ids[j]] = [ids[j], ids[i]]; await api('admin_reorder', { sheet, ids }); await reload();
+}
+
+/* ----- Alur ----- */
+TABS.alur = async function () {
+  const rows = await api('admin_list', { sheet: 'Alur' }); rows.sort((a, b) => a.urut - b.urut); S.cache.alur = rows;
+  $('#sb').innerHTML = `<div class="card"><div class="ch"><h3>Tahapan persetujuan MOU</h3><button class="btn pri sm" data-act="alur-new">${ic('plus')} Tambah Tahap</button></div>
+    <p class="sm mute">Tahap dijalankan berurutan dari atas. Tahap dengan <b>kondisi</b> hanya ikut bila syaratnya terpenuhi (mis. Direktur hanya jika diskon &gt; 12%). Perubahan berlaku untuk MOU yang <b>diajukan setelahnya</b>; MOU yang sedang berjalan tidak berubah (admin dapat menyisipkan tahap pada MOU tertentu dari halaman MOU).</p>
+    ${rows.map((a, i) => `<div class="li" style="cursor:default;align-items:center"><div style="flex:1"><b>${i + 1}. ${esc(a.nama_step)}</b> ${a.aktif === 'N' ? chip('Nonaktif', 'mute') : ''}<div class="sm mute">Penyetuju: ${esc(roleName(a.role_key))}${a.kond_field ? ' · <b>' + esc(condText(a)) + '</b>' : ''}${a.keterangan ? ' · ' + esc(a.keterangan) : ''}</div></div>
+      <div style="display:flex;gap:2px">${upDown('alur-mv', a.id, i, rows.length)}<button class="btn sm" data-act="alur-edit" data-id="${esc(a.id)}">${ic('edit')}</button><button class="btn sm bad" data-act="alur-del" data-id="${esc(a.id)}">${ic('trash')}</button></div></div>`).join('')}</div>`;
+};
+ACT['alur-mv'] = t => moveRow('Alur', S.cache.alur, t.dataset.id, t.dataset.d);
+ACT['alur-new'] = () => alurForm({ aktif: true });
+ACT['alur-edit'] = t => alurForm(S.cache.alur.find(a => a.id === t.dataset.id));
+ACT['alur-del'] = async t => { const a = S.cache.alur.find(x => x.id === t.dataset.id); if (await confirmBox('Hapus tahap "' + a.nama_step + '"?', 'Hapus', true)) { await api('admin_delete', { sheet: 'Alur', id: a.id }); await reload(); } };
+function alurForm(a) {
+  const isNew = !a.id;
+  formModal({
+    title: isNew ? 'Tambah Tahap' : 'Ubah Tahap', wide: true, values: Object.assign({}, a, { aktif: a.aktif !== 'N' }),
+    defs: [{ key: 'nama_step', label: 'Nama tahap', tipe: 'text', wajib: true }, { key: 'role_key', label: 'Peran penyetuju', tipe: 'select', opsi: roleOpts(), wajib: true },
+    { key: 'aktif', label: 'Tahap aktif', tipe: 'checkbox' }, { key: 'keterangan', label: 'Keterangan', tipe: 'text' },
+    { key: 'kond_field', label: 'Kondisi: kolom MOU', tipe: 'select', opsi: condFieldOpts().slice(1), bantuan: 'Kosongkan bila tahap selalu ikut.' }, { key: 'kond_op', label: 'Kondisi: operator', tipe: 'select', opsi: opOpts() },
+    { key: 'kond_nilai', label: 'Kondisi: nilai', tipe: 'text', bantuan: 'Untuk kotak centang isi: true / false.' }, { key: 'kond_nilai2', label: 'Nilai ke-2 (khusus "antara")', tipe: 'text' }],
+    onSave: async (v, m) => { v.aktif = yv(v.aktif); if (!isNew) v.id = a.id; if (isNew) v.urut = ''; await api('admin_save', { sheet: 'Alur', row: Object.assign({}, a, v) }); m.close(); toast('Tahap disimpan.', 'ok'); await reload(); }
+  });
+}
+
+/* ----- Kriteria ----- */
+TABS.kriteria = async function () {
+  const rows = await api('admin_list', { sheet: 'Kriteria' }); S.cache.krt = rows; const amb = S.meta.settings.ambang_kesesuaian;
+  const group = (fase, title) => `<h4 style="margin:12px 0 4px">${title}</h4>${rows.filter(k => k.fase === fase).map(k => `<div class="li" data-act="krt-edit" data-id="${esc(k.id)}"><div><b>${esc(k.nama)}</b> ${chip(k.tingkat === 'wajib' ? 'Wajib' : 'Saran', k.tingkat === 'wajib' ? 'info' : 'mute')} ${k.aktif === 'N' ? chip('Nonaktif', 'mute') : ''}<div class="sm mute">${esc(fieldLabel(k.field))} ${esc(opText(k))} · bobot ${esc(k.bobot)}</div></div></div>`).join('') || '<div class="sm mute">—</div>'}`;
+  $('#sb').innerHTML = `<div class="card"><div class="ch"><h3>Kriteria kesesuaian MOU</h3><button class="btn pri sm" data-act="krt-new">${ic('plus')} Tambah Kriteria</button></div>
+    <p class="sm mute">Setiap kriteria membandingkan satu kolom MOU (termasuk kolom tambahan & hasil hitung otomatis) dengan batas tertentu. <b>Wajib</b> yang gagal ⇒ "Tidak Sesuai". Bila semua wajib lulus, hasil ditentukan skor berbobot dibanding ambang (${esc(amb)}%; ubah di tab Umum).</p>
+    <div class="warnbox">Nilai batas bawaan (diskon ≤ 15%, termin ≤ 30 hari, durasi 12–36 bulan, capaian ≥ 80%) hanyalah contoh. <b>Sesuaikan dengan kebijakan RS.</b></div>
+    ${group('pengajuan', 'Fase pengajuan (isi dokumen MOU)')}${group('evaluasi', 'Fase evaluasi (realisasi setelah MOU aktif)')}${group('semua', 'Semua fase')}</div>`;
+};
+ACT['krt-new'] = () => krtForm({ aktif: true, tingkat: 'saran', fase: 'pengajuan', bobot: 1 });
+ACT['krt-edit'] = t => krtForm(S.cache.krt.find(k => k.id === t.dataset.id));
+function krtForm(k) {
+  const isNew = !k.id;
+  const m = formModal({
+    title: isNew ? 'Tambah Kriteria' : 'Ubah Kriteria', wide: true, values: Object.assign({}, k, { aktif: k.aktif !== 'N' }),
+    defs: [{ key: 'nama', label: 'Nama kriteria', tipe: 'text', wajib: true, bantuan: 'Contoh: "Diskon tidak melebihi 15%"' }, { key: 'field', label: 'Kolom yang dinilai', tipe: 'select', opsi: condFieldOpts().slice(1), wajib: true },
+    { key: 'op', label: 'Operator', tipe: 'select', opsi: opOpts(), wajib: true }, { key: 'nilai', label: 'Nilai pembanding', tipe: 'text', bantuan: 'Kotak centang: true / false. Kosongkan untuk "terisi/kosong".' },
+    { key: 'nilai2', label: 'Nilai ke-2 (khusus "antara")', tipe: 'text' }, { key: 'bobot', label: 'Bobot', tipe: 'number' },
+    { key: 'tingkat', label: 'Tingkat', tipe: 'select', opsi: [{ v: 'wajib', l: 'Wajib (gagal ⇒ Tidak Sesuai)' }, { v: 'saran', l: 'Saran (hanya mengurangi skor)' }], wajib: true },
+    { key: 'fase', label: 'Fase', tipe: 'select', opsi: [{ v: 'pengajuan', l: 'Pengajuan (isi dokumen)' }, { v: 'evaluasi', l: 'Evaluasi (realisasi)' }, { v: 'semua', l: 'Semua fase' }], wajib: true },
+    { key: 'pesan', label: 'Pesan bila tidak terpenuhi', tipe: 'text' }, { key: 'aktif', label: 'Kriteria aktif', tipe: 'checkbox' }],
+    onSave: async (v, mm) => { v.aktif = yv(v.aktif); if (!isNew) v.id = k.id; await api('admin_save', { sheet: 'Kriteria', row: v }); mm.close(); toast('Kriteria disimpan.', 'ok'); await reload(); }
+  });
+  if (!isNew) { const b = document.createElement('button'); b.className = 'btn bad'; b.innerHTML = ic('trash') + ' Hapus'; m.foot.prepend(b); b.onclick = safe(async () => { if (await confirmBox('Hapus kriteria ini?', 'Hapus', true)) { await api('admin_delete', { sheet: 'Kriteria', id: k.id }); m.close(); await reload(); } }); }
+}
+
+/* ----- Kolom tambahan ----- */
+const ENT_LABEL = { mou: 'MOU', perusahaan: 'Perusahaan', kunjungan: 'Kunjungan', realisasi: 'Realisasi' };
+const TIPE_LABEL = { text: 'Teks pendek', textarea: 'Teks panjang', number: 'Angka', date: 'Tanggal', month: 'Bulan', select: 'Pilihan', checkbox: 'Kotak centang (Ya/Tidak)', url: 'Link' };
+TABS.kolom = async function () {
+  const all = await api('admin_list', { sheet: 'FieldDef' }); const rows = all.filter(r => r.entitas === S.fent).sort((a, b) => a.urut - b.urut); S.cache.fld = rows;
+  const core = S.meta.defs[S.fent].filter(f => f.core);
+  $('#sb').innerHTML = `<div class="card"><div class="ch"><h3>Kolom tambahan</h3><button class="btn pri sm" data-act="fld-new">${ic('plus')} Tambah Kolom</button></div>
+    <div class="chips" style="margin-bottom:10px">${Object.keys(ENT_LABEL).map(e => `<button class="pill ${S.fent === e ? 'on' : ''}" data-act="fent" data-e="${e}">${ENT_LABEL[e]}</button>`).join('')}</div>
+    <p class="sm mute">Kolom tambahan otomatis muncul di formulir ${ENT_LABEL[S.fent]} dan bisa dipakai di <b>Kriteria</b> serta <b>Kondisi alur</b> (khusus MOU). Menghapus kolom tidak menghapus data yang sudah terisi.</p>
+    ${rows.map((f, i) => `<div class="li" style="cursor:default;align-items:center"><div style="flex:1"><b>${esc(f.label)}</b> ${f.aktif === 'N' ? chip('Nonaktif', 'mute') : ''}${f.wajib === 'Y' ? chip('Wajib', 'info') : ''}<div class="sm mute">${esc(TIPE_LABEL[f.tipe] || f.tipe)} · kode <code>${esc(f.key)}</code>${f.opsi ? ' · ' + esc(f.opsi) : ''}</div></div>
+      <div style="display:flex;gap:2px">${upDown('fld-mv', f.id, i, rows.length)}<button class="btn sm" data-act="fld-edit" data-id="${esc(f.id)}">${ic('edit')}</button><button class="btn sm bad" data-act="fld-del" data-id="${esc(f.id)}">${ic('trash')}</button></div></div>`).join('') || '<div class="empty">Belum ada kolom tambahan untuk ' + ENT_LABEL[S.fent] + '.</div>'}
+    <details class="old"><summary>Kolom bawaan sistem (${core.length})</summary><div class="sm mute">${core.map(f => esc(f.label)).join(' · ')}</div></details></div>`;
+};
+ACT.fent = t => { S.fent = t.dataset.e; route(); };
+ACT['fld-mv'] = t => moveRow('FieldDef', S.cache.fld, t.dataset.id, t.dataset.d);
+ACT['fld-new'] = () => fldForm({ entitas: S.fent, aktif: true, tipe: 'text' });
+ACT['fld-edit'] = t => fldForm(S.cache.fld.find(f => f.id === t.dataset.id));
+ACT['fld-del'] = async t => { const f = S.cache.fld.find(x => x.id === t.dataset.id); if (await confirmBox('Hapus kolom "' + f.label + '"? Data lama tetap tersimpan, tetapi tidak ditampilkan lagi.', 'Hapus', true)) { await api('admin_delete', { sheet: 'FieldDef', id: f.id }); await reload(); } };
+function fldForm(f) {
+  const isNew = !f.id;
+  formModal({
+    title: isNew ? 'Tambah Kolom — ' + ENT_LABEL[f.entitas] : 'Ubah Kolom', wide: true, values: Object.assign({}, f, { aktif: f.aktif !== 'N', wajib: f.wajib === 'Y' }),
+    defs: [{ key: 'label', label: 'Label (tampil di formulir)', tipe: 'text', wajib: true }, { key: 'key', label: 'Kode kolom', tipe: 'text', wajib: true, bantuan: isNew ? 'Huruf kecil/angka/_, tanpa spasi. Tidak dapat diubah setelah dibuat. Contoh: nilai_kontrak' : 'Tidak dapat diubah.' },
+    { key: 'tipe', label: 'Tipe isian', tipe: 'select', opsi: S.meta.field_types.map(t => ({ v: t, l: TIPE_LABEL[t] || t })), wajib: true }, { key: 'opsi', label: 'Pilihan (untuk tipe Pilihan)', tipe: 'text', bantuan: 'Pisahkan dengan koma. Contoh: Ya, Tidak, Sebagian' },
+    { key: 'wajib', label: 'Wajib diisi', tipe: 'checkbox' }, { key: 'aktif', label: 'Kolom aktif', tipe: 'checkbox' }, { key: 'bantuan', label: 'Teks bantuan', tipe: 'text' }],
+    lock: isNew ? [] : ['key'],
+    onSave: async (v, m) => { v.wajib = yv(v.wajib); v.aktif = yv(v.aktif); v.entitas = f.entitas; if (!isNew) v.id = f.id; if (isNew) v.urut = ''; await api('admin_save', { sheet: 'FieldDef', row: v }); m.close(); toast('Kolom disimpan.', 'ok'); await reload(); }
+  });
+}
+
+/* ----- Peran ----- */
+TABS.peran = async function () {
+  const rows = S.meta.roles; S.cache.roles = rows;
+  $('#sb').innerHTML = `<div class="card"><div class="ch"><h3>Peran / jabatan</h3><button class="btn pri sm" data-act="rol-new">${ic('plus')} Tambah Peran</button></div>
+    <p class="sm mute">Peran dipakai sebagai penyetuju pada alur. "Hak input" = boleh mencatat perusahaan, kunjungan, MOU, dan realisasi. Peran baru (mis. Kepala Bagian Hukum) langsung bisa dipilih pada tahap alur.</p>
+    ${rows.map(r => `<div class="li" data-act="rol-edit" data-id="${esc(r.id)}"><div><b>${esc(r.nama)}</b> <span class="sm mute">kode ${esc(r.id)}</span></div>${r.bisa_input === 'Y' ? chip('Hak input', 'info') : ''}</div>`).join('')}</div>`;
+};
+ACT['rol-new'] = () => rolForm({ bisa_input: 'N' });
+ACT['rol-edit'] = t => rolForm(S.cache.roles.find(r => r.id === t.dataset.id));
+function rolForm(r) {
+  const isNew = !r.id;
+  const m = formModal({
+    title: isNew ? 'Tambah Peran' : 'Ubah Peran', values: { nama: r.nama, id: r.id, bisa_input: r.bisa_input === 'Y' },
+    defs: [{ key: 'nama', label: 'Nama peran', tipe: 'text', wajib: true }].concat(isNew ? [{ key: 'id', label: 'Kode peran (opsional)', tipe: 'text', bantuan: 'Kosongkan untuk dibuat otomatis dari nama.' }] : []).concat([{ key: 'bisa_input', label: 'Boleh input data (perusahaan, kunjungan, MOU)', tipe: 'checkbox' }]),
+    onSave: async (v, mm) => { v.bisa_input = yv(v.bisa_input); if (!isNew) { v.id = r.id; v.urut = r.urut; } await api('admin_save', { sheet: 'Roles', row: v }); mm.close(); toast('Peran disimpan.', 'ok'); await reload(); }
+  });
+  if (!isNew) { const b = document.createElement('button'); b.className = 'btn bad'; b.innerHTML = ic('trash') + ' Hapus'; m.foot.prepend(b); b.onclick = safe(async () => { if (await confirmBox('Hapus peran "' + r.nama + '"?', 'Hapus', true)) { await api('admin_delete', { sheet: 'Roles', id: r.id }); m.close(); await reload(); } }); }
+}
+
+/* ----- Pengguna ----- */
+TABS.user = async function () {
+  const rows = await api('user_list'); S.cache.users = rows;
+  $('#sb').innerHTML = `<div class="card"><div class="ch"><h3>Pengguna</h3><button class="btn pri sm" data-act="usr-new">${ic('plus')} Tambah Pengguna</button></div>
+    ${tableHtml([{ h: 'Nama', v: u => u.nama, html: u => `<b>${esc(u.nama)}</b><small>@${esc(u.username)} · ${esc(u.jabatan)}</small>` }, { h: 'Peran', v: u => roleName(u.role_key) }, { h: 'WhatsApp', v: u => u.no_wa }, { h: 'Status', v: u => u.aktif, html: u => u.aktif === 'N' ? chip('Nonaktif', 'mute') : chip('Aktif', 'ok') }], rows, u => `data-act="usr-edit" data-id="${esc(u.id)}"`)}</div>`;
+};
+ACT['usr-new'] = () => usrForm({ aktif: 'Y' });
+ACT['usr-edit'] = t => usrForm(S.cache.users.find(u => u.id === t.dataset.id));
+function usrForm(u) {
+  const isNew = !u.id;
+  const m = formModal({
+    title: isNew ? 'Tambah Pengguna' : 'Ubah Pengguna', wide: true, values: Object.assign({}, u, { aktif: u.aktif !== 'N', pin: '' }), lock: isNew ? [] : ['username'],
+    defs: [{ key: 'username', label: 'Username', tipe: 'text', wajib: true, bantuan: 'Huruf kecil/angka, tidak dapat diubah.' }, { key: 'nama', label: 'Nama lengkap', tipe: 'text', wajib: true }, { key: 'jabatan', label: 'Jabatan', tipe: 'text' },
+    { key: 'role_key', label: 'Peran', tipe: 'select', opsi: roleOpts(), wajib: true }, { key: 'no_wa', label: 'No. WhatsApp (untuk notifikasi)', tipe: 'text', bantuan: 'Format 08xxxxxxxxxx' },
+    { key: 'pin', label: isNew ? 'PIN (4–8 angka)' : 'Reset PIN (kosongkan bila tidak diubah)', tipe: 'text', wajib: isNew }, { key: 'aktif', label: 'Akun aktif', tipe: 'checkbox' }],
+    onSave: async (v, mm) => { v.aktif = yv(v.aktif); if (!isNew) v.id = u.id; await api('user_save', { row: v }); mm.close(); toast('Pengguna disimpan.', 'ok'); route(); }
+  });
+  if (!isNew) { const b = document.createElement('button'); b.className = 'btn bad'; b.innerHTML = ic('trash') + ' Hapus'; m.foot.prepend(b); b.onclick = safe(async () => { if (await confirmBox('Hapus pengguna @' + u.username + '? (Disarankan menonaktifkan saja.)', 'Hapus', true)) { await api('user_delete', { id: u.id }); m.close(); route(); } }); }
+}
+
+/* ----- Umum ----- */
+TABS.umum = async function () {
+  const s = await api('settings_get');
+  $('#sb').innerHTML = `<div class="card"><div class="ch"><h3>Pengaturan umum</h3></div><div id="er"></div><div class="form" id="sf">
+    ${fieldHtml({ key: 'nama_rs', label: 'Nama rumah sakit', tipe: 'text' }, s.nama_rs)}
+    ${fieldHtml({ key: 'ambang_kesesuaian', label: 'Ambang skor "Sesuai" (%)', tipe: 'number', bantuan: 'Skor di bawah ambang ⇒ "Perlu Perhatian".' }, s.ambang_kesesuaian)}
+    ${fieldHtml({ key: 'reminder_hari', label: 'Pengingat masa habis (hari sebelum berakhir)', tipe: 'text', bantuan: 'Pisahkan koma, mis. 90,60,30,14,7' }, s.reminder_hari)}
+    ${fieldHtml({ key: 'reminder_role', label: 'Peran penerima pengingat', tipe: 'select', opsi: S.meta.roles.map(r => ({ v: r.id, l: r.nama })) }, s.reminder_role)}
+    ${fieldHtml({ key: 'wa_aktif', label: 'Aktifkan notifikasi WhatsApp (Fonnte)', tipe: 'checkbox' }, s.wa_aktif === 'Y')}
+    ${fieldHtml({ key: 'fonnte_token', label: 'Token Fonnte', tipe: 'text', bantuan: 'Tersimpan di server; hanya 4 karakter terakhir ditampilkan.' }, s.fonnte_token)}
+    ${fieldHtml({ key: 'app_url', label: 'URL aplikasi (disisipkan di pesan WA)', tipe: 'url' }, s.app_url)}</div>
+    <div class="actions" style="margin-top:14px"><button class="btn pri" data-act="set-save">Simpan</button><button class="btn" data-act="set-test">Uji pengingat sekarang</button></div>
+    <p class="sm mute">Pengingat harian berjalan otomatis setelah fungsi <code>setupTrigger()</code> dijalankan sekali di editor Apps Script. "Uji pengingat" memeriksa MOU yang tepat jatuh pada hari-hari di atas dan mengirim WA bila notifikasi aktif.</p></div>`;
+};
+const SET_DEFS = [{ key: 'nama_rs', tipe: 'text' }, { key: 'ambang_kesesuaian', tipe: 'number' }, { key: 'reminder_hari', tipe: 'text' }, { key: 'reminder_role', tipe: 'select' }, { key: 'wa_aktif', tipe: 'checkbox' }, { key: 'fonnte_token', tipe: 'text' }, { key: 'app_url', tipe: 'url' }];
+ACT['set-save'] = async () => {
+  const v = readFields($('#sf'), SET_DEFS); v.wa_aktif = yv(v.wa_aktif);
+  await api('settings_save', { values: v }); toast('Pengaturan disimpan.', 'ok'); await loadMeta();
+};
+ACT['set-test'] = async () => { const r = await api('reminder_test'); toast(r.length ? r.length + ' MOU memicu pengingat hari ini.' : 'Tidak ada MOU yang jatuh pada hari pengingat hari ini.', 'ok'); };
+
+/* ----- Log ----- */
+TABS.log = async function () {
+  const rows = await api('log_list');
+  $('#sb').innerHTML = `<div class="card"><div class="ch"><h3>Log aktivitas (300 terakhir)</h3></div>${tableHtml([{ h: 'Waktu', v: l => l.waktu, html: l => fmtDT(l.waktu) }, { h: 'Pengguna', v: l => l.user }, { h: 'Aksi', v: l => l.aksi }, { h: 'Objek', v: l => l.entitas }, { h: 'Detail', v: l => l.detail }], rows)}</div>`;
+};
+
+/* ====================================================================
+   INIT
+   ==================================================================== */
+(async function init() {
+  if (!S.token) return showLogin();
+  try { await loadMeta(); startApp(); }
+  catch (e) { showLogin(); if (!/Sesi|login/i.test(e.message)) toast(e.message, 'err'); }
+})();
+</script>
+</body>
+</html>
