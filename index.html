@@ -147,7 +147,7 @@ details.old{margin-top:6px}details.old summary{cursor:pointer;color:var(--mute);
    SIHUMAS-RS — Frontend. Ganti API_URL dengan URL Web App Apps Script.
    INGAT: setiap index.html diganti penuh, API_URL harus diisi ulang.
    ==================================================================== */
-const API_URL = 'https://script.google.com/macros/s/AKfycbysd0umwtw1Y9XretnQ9gHF5DP7nvUaAaJNUDiytTbfYLv5npuneMGIHD4GLRdkcZx2/exec';
+const API_URL = 'API_URL';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -193,16 +193,33 @@ const sisaChip = d => d === null || d === undefined ? '–' : d < 0 ? chip('Lewa
 /* ---------- API ---------- */
 let pending = 0;
 const busy = d => { pending += d; document.body.classList.toggle('loading', pending > 0); };
+const READ_RE = /^(init|bootstrap|dashboard|inbox|settings_get|log_list|dokumen_get)$|_(list|get)$/;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function api(action, data = {}) {
   if (API_URL === 'API_URL') throw new Error('API_URL belum diisi pada index.html (lihat PANDUAN.md langkah 6).');
+  const isRead = READ_RE.test(action);
+  const tries = isRead ? 3 : 1;                 // aksi baca dicoba ulang otomatis; aksi tulis tidak (hindari data ganda)
+  const limit = isRead ? 40000 : 120000;         // batas waktu per percobaan (ms)
   busy(1);
   try {
-    let res;
-    try { res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, token: S.token, data }) }); }
-    catch (e) { throw new Error('Tidak dapat terhubung ke server. Periksa koneksi internet / URL Web App.'); }
-    let j; try { j = await res.json(); } catch (e) { throw new Error('Respons server tidak valid. Pastikan Web App di-deploy dengan akses "Anyone".'); }
-    if (!j.ok) { if (/^AUTH/.test(j.error)) { doLogout(true); } throw new Error(String(j.error).replace(/^AUTH:\s*/, '')); }
-    return j.data;
+    let lastErr;
+    for (let t = 1; t <= tries; t++) {
+      const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), limit);
+      try {
+        const res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, token: S.token, data }), signal: ctl.signal });
+        const txt = await res.text(); clearTimeout(timer);
+        let j; try { j = JSON.parse(txt); } catch (e) { throw Object.assign(new Error('Respons server tidak valid. Pastikan Web App di-deploy dengan akses "Anyone".'), { retry: true }); }
+        if (!j.ok) { if (/^AUTH/.test(j.error)) { doLogout(true); } throw Object.assign(new Error(String(j.error).replace(/^AUTH:\s*/, '')), { final: true }); }
+        return j.data;
+      } catch (e) {
+        clearTimeout(timer);
+        if (e.final) throw e;
+        lastErr = e.retry ? e : new Error(e.name === 'AbortError' ? 'Server terlalu lama merespons.' : 'Tidak dapat terhubung ke server. Periksa koneksi internet / URL Web App.');
+        if (t < tries) { if (t === 1) toast('Koneksi lambat, mencoba lagi…'); await sleep(1200 * t); continue; }
+        if (!isRead) lastErr = new Error(lastErr.message + ' Perubahan mungkin sudah tersimpan — periksa daftar sebelum mengulang.');
+        throw lastErr;
+      }
+    }
   } finally { busy(-1); }
 }
 const safe = fn => async (...a) => { try { await fn(...a); } catch (e) { toast(e.message || String(e), 'err'); } };
@@ -301,8 +318,9 @@ const mouFields = () => S.meta.defs.mou.map(f => ({ key: f.key, label: f.label, 
 const fieldLabel = k => (mouFields().find(f => f.key === k) || { label: k }).label;
 
 /* ---------- auth ---------- */
-async function loadMeta() {
-  S.meta = await api('bootstrap'); S.user = S.meta.user;
+async function loadMeta(first) {
+  S.meta = await api(first ? 'init' : 'bootstrap'); S.user = S.meta.user;
+  if (S.meta.dash) { S.pre = S.meta.dash; S.preAt = Date.now(); S.badge = S.pre.menunggu_saya; delete S.meta.dash; }
 }
 function doLogout(silent) {
   if (!silent && S.token) api('logout').catch(() => { });
@@ -320,7 +338,7 @@ function showLogin() {
     try {
       const r = await api('login', { username: $('#u').value, pin: $('#p').value });
       S.token = r.token; localStorage.setItem('sihumas_token', r.token);
-      await loadMeta(); startApp();
+      await loadMeta(true); startApp();
     } catch (err) { er.innerHTML = `<div class="errbox">${esc(err.message)}</div>`; }
   };
 }
@@ -338,7 +356,7 @@ function startApp() {
     <div class="main"><header class="top"><h1 id="ttl"></h1><button class="avatar" data-act="menu">${ic('key')}<span>${esc(S.user.nama)}</span></button></header><div id="content"></div></div>
     <nav class="bottom" id="bn">${navHtml('bottom')}</nav></div>`;
   route();
-  refreshBadge();
+  if (!S.preAt) refreshBadge();
 }
 function paintNav() {
   if (!$('#sn')) return; $('#sn').innerHTML = navHtml('side'); $('#bn').innerHTML = navHtml('bottom');
@@ -390,7 +408,7 @@ const hasInput = () => S.user.can_input;
    VIEW: BERANDA
    ==================================================================== */
 VIEWS.dashboard = async function () {
-  const d = await api('dashboard'); S.badge = d.menunggu_saya; paintNav();
+  const d = (S.pre && Date.now() - S.preAt < 15000) ? S.pre : await api('dashboard'); S.pre = null; S.badge = d.menunggu_saya; paintNav();
   const k = (label, val, sub, tone, v, flt) => `<button class="kpi ${tone || ''}" data-act="go" data-v="${v}" ${flt ? `data-flt='${esc(JSON.stringify(flt))}'` : ''}><span>${label}</span><b>${val}</b><small>${sub || ''}</small></button>`;
   const maxB = Math.max(1, ...d.kunjungan_per_bulan.map(b => b.jumlah));
   const order = ['Prospek', 'Dikunjungi', 'Proses MOU', 'MOU Aktif', 'MOU Berakhir', 'Tidak Lanjut'];
@@ -969,7 +987,7 @@ TABS.log = async function () {
    ==================================================================== */
 (async function init() {
   if (!S.token) return showLogin();
-  try { await loadMeta(); startApp(); }
+  try { await loadMeta(true); startApp(); }
   catch (e) { showLogin(); if (!/Sesi|login/i.test(e.message)) toast(e.message, 'err'); }
 })();
 </script>
